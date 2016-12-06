@@ -122,6 +122,7 @@ function! s:PerforceDiff()
         return
     endif
     let filename = s:PerforceAddHaveRevision(filename)
+    let filetype = &filetype
 
     " Setup current window
     diffthis
@@ -132,6 +133,7 @@ function! s:PerforceDiff()
     let perforce_command = 'print ' . filename
     silent call s:PerforceRead(perforce_command)
     setlocal nomodifiable
+    execute "set filetype=" . filetype
     diffthis
 
     " q to exit
