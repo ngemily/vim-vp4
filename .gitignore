@@ -1,0 +1,3 @@
+# Ignore unit tests for now
+Makefile
+t/*

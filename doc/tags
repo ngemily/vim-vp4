@@ -1,0 +1,16 @@
+Vp4Annotate	vp4.txt	/*Vp4Annotate*
+Vp4Change	vp4.txt	/*Vp4Change*
+Vp4Diff	vp4.txt	/*Vp4Diff*
+Vp4Edit	vp4.txt	/*Vp4Edit*
+Vp4Reopen	vp4.txt	/*Vp4Reopen*
+Vp4Revert	vp4.txt	/*Vp4Revert*
+g:vp4_annotate_revision	vp4.txt	/*g:vp4_annotate_revision*
+g:vp4_annotate_simple	vp4.txt	/*g:vp4_annotate_simple*
+g:vp4_perforce_executable	vp4.txt	/*g:vp4_perforce_executable*
+g:vp4_prompt_on_modify	vp4.txt	/*g:vp4_prompt_on_modify*
+g:vp4_prompt_on_write	vp4.txt	/*g:vp4_prompt_on_write*
+vp4-commands	vp4.txt	/*vp4-commands*
+vp4-credits	vp4.txt	/*vp4-credits*
+vp4-intro	vp4.txt	/*vp4-intro*
+vp4-options	vp4.txt	/*vp4-options*
+vp4.txt	vp4.txt	/*vp4.txt*

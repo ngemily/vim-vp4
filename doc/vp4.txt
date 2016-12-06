@@ -1,0 +1,104 @@
+*vp4.txt* integration with perforce
+
+                                       ___
+                                      //| |
+                          ___   __ __//_| |_
+                          \  \ // '_ \__  __|
+                           \  V/| |_) ; | |
+                            \_/ | .--'  |_|
+                                | |
+                                \_|
+
+         Integration with perforce.  Inspired by tpope/vim-fugitive.
+
+==============================================================================
+INTRO                                                              *vp4-intro*
+
+vp4 does the following:
+
+    * Provides commands for interacting with perforce while remaining in Vim
+    * Automatically detects operations on files not open for edit
+    * Integrates with vimdiff
+    * Enhances `p4 annotate` by adding more useful information such as the
+      date, user, and description of the changelist
+
+==============================================================================
+COMMANDS                                                        *vp4-commands*
+
+                                                                 *Vp4Annotate*
+Opens a scrollbound split showing the changelist where each line was last
+modified, and the date, user, and description of the changelist.  This feature
+is slow on large files with many different last changes.  To speed it up,
+visually select lines to fully annotate (recommended), or use
+|g:vp4_annotate_simple| to show only the changelist number.  'q' exits.
+
+Opens a view like:>
+    +----------------------------------+------------------------+
+    | <Description> <date> <user> <cl> | for (auto elem : l) {  |
+    | <Description> <date> <user> <cl> |     std::cout << elem; |
+    |                ...               |          ...           |
+    +----------------------------------+------------------------+
+    | :Pannotate                                                |
+    +----------------------------------+------------------------+
+<
+
+Note: `p4 annotate` works only submitted revisions of files.  Therefore, the
+annotations will be misaligned on files that are currently being edited.
+
+                                                                   *Vp4Change*
+Opens the change specification in a new split.  Equivalent to `p4 change -o`
+if current file is not already opened in a changelist and `p4 change -o -c
+<cl>` if already opened in a changelist.  Use the write (:w) command to make
+the change, quit (:q) to abort.
+
+                                                                     *Vp4Diff*
+Opens the depot version of the current file in a vertical split, in diff mode.
+Hit 'q' to exit.
+
+                                                                     *Vp4Edit*
+Opens current file for edit.
+
+                                                                   *Vp4Reopen*
+Move the current file to a different changelist.  Lists all open changelists
+and prompts for a selection.
+
+                                                                   *Vp4Revert*
+Reverts current file.  Confirms before doing so.
+
+==============================================================================
+OPTIONS                                                          *vp4-options*
+
+*g:vp4_perforce_executable* Name of perforce executable.
+                            = p4 (default)
+
+*g:vp4_prompt_on_write*     Prompt for edit when (force) writing a file that
+                            has not already been opened for edit.
+                            = 0
+                            = 1 (default)
+
+*g:vp4_prompt_on_modify*    Prompt for edit when modifying a file that has not
+                            already been opened for edit.
+                            = 0 (default)
+                            = 1
+
+*g:vp4_annotate_simple*     Show only the changelist number when annotating.
+                            Significantly speeds up |Vp4Annotate| by
+                            eliminating calls to `p4 open`.
+                            = 0 (default)
+                            = 1
+
+*g:vp4_annotate_revision*   Show revision number instead of changelist number
+                            in which line was changed.  Full annotation
+                            (username, date, description) is not available if
+                            set.
+                            = 0 (default)
+                            = 1
+==============================================================================
+CREDITS                                                          *vp4-credits*
+
+This plugin was heavily inspired by vim-fugitive.  Additionally, the author
+was helped greatly by the book Learn Vimscript the Hard Way and Vim's
+excellent built-in documentation.
+
+
+vim:tw=78:ts=8:ft=help:norl:
