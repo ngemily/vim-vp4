@@ -63,7 +63,9 @@ Move the current file to a different changelist.  Lists all open changelists
 and prompts for a selection.
 
                                                                    *Vp4Revert*
-Reverts current file.  Confirms before doing so.
+:Vp4Revert[!]
+Reverts current file.  Confirms before doing so.  Use [!] to skip
+confirmation.
 
 ==============================================================================
 OPTIONS                                                          *vp4-options*

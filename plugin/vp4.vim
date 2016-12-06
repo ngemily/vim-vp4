@@ -172,16 +172,19 @@ function! s:PerforceEdit()
 endfunction
 
 " Call p4 revert.  Confirms before performing the revert.
-function! s:PerforceRevert()
+function! s:PerforceRevert(bang)
     let filename = expand('%')
     if !s:PerforceValidAndOpen(filename)
         echom 'not a perforce file opened for edit'
         return
     endif
 
-    let do_revert = input('Are you sure you want to revert ' . filename
-            \ . '? [y/n]: ')
-    if do_revert ==? 'y'
+    if !a:bang
+        let do_revert = input('Are you sure you want to revert ' . filename
+                \ . '? [y/n]: ')
+    endif
+
+    if a:bang || do_revert ==? 'y'
         call s:PerforceSystem('revert ' .filename)
         set nomodified
     endif
@@ -403,7 +406,7 @@ endfunction
 command! Vp4Diff call <SID>PerforceDiff()
 command! -range=% Vp4Annotate <line1>,<line2>call <SID>PerforceAnnotate()
 command! Vp4Change call <SID>PerforceChange()
-command! Vp4Revert call <SID>PerforceRevert()
+command! -bang Vp4Revert call <SID>PerforceRevert(<bang>0)
 command! Vp4Reopen call <SID>PerforceReopen()
 command! Vp4Edit call <SID>PerforceEdit()
 
