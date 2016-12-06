@@ -77,6 +77,9 @@ endfunction
 
 " Tests for both existence and opened
 function! s:PerforceValidAndOpen(filename)
+    if !s:PerforceValid(a:filename)
+        return 0
+    endif
     if g:perforce_debug
         echom matchstr(s:PerforceSystem('opened ' . a:filename), 'not.*client')
     endif
