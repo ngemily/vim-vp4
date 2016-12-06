@@ -26,6 +26,7 @@ vp4 does the following:
 COMMANDS                                                        *vp4-commands*
 
                                                                  *Vp4Annotate*
+:[range]Vp4Annotate
 Opens a scrollbound split showing the changelist where each line was last
 modified, and the date, user, and description of the changelist.  This feature
 is slow on large files with many different last changes.  To speed it up,
