@@ -106,6 +106,12 @@ function! s:PerforceValid(filename)
             \ 'not.*client') == ''
 endfunction
 
+" Return changelist that given file is open in
+function! s:PerforceGetCurrentChangelist(filename)
+    return split(s:PerforceSystem('fstat ' . a:filename
+                \ . ' | grep change | cut -d " " -f3'), '\n')[0]
+endfunction
+
 " Return filename with appended 'have revision' specifier
 function! s:PerforceAddHaveRevision(filename)
     let rev = matchstr(s:PerforceSystem('have ' . a:filename), '#\zs[0-9]\+\ze')
@@ -200,25 +206,24 @@ endfunction
     " Uses the -o/-i options to avoid the confirmation on abort.
     " Works by opening a new window to write your change description.
 function! s:PerforceChange()
-    let filename = expand('%')
-    if !s:PerforceValidAndOpen(filename)
-        echom 'not a perforce file opened for edit'
-        return
-    endif
-
+    " Open a new split to hold the change specification.  Clear it in case of
+    " any previous invocations.
     topleft new __perforce_change__
     normal! ggdG
 
     " If this file is already in a changelist, allow the user to modify that
     " changelist by calling `p4 change -o <cl#>`.  Otherwise, call for default
-    " changelist.
+    " changelist by omitting the changelist argument.
     let perforce_command = 'change -o'
-    let lnr = 26
-    let changelist = s:PerforceSystem('fstat ' . filename
-            \ . ' | grep change | cut -d " " -f3')
-    if changelist
-        let perforce_command .= ' ' . changelist
-        let lnr = 28
+    let filename = expand('%')
+    if s:PerforceOpened(filename)
+        let changelist = s:PerforceGetCurrentChangelist(filename)
+        if changelist
+            let perforce_command .= ' ' . changelist
+            let lnr = 28
+        endif
+    else
+        let lnr = 26
     endif
     silent call s:PerforceRead(perforce_command)
 
