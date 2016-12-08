@@ -180,10 +180,31 @@ function! s:PerforceEdit()
     execute 'edit ' filename
 endfunction
 
+" Call p4 shelve
+function! s:PerforceShelve(bang)
+    let filename = expand('%')
+    if !s:PerforceValidAndOpen(filename)
+        echom 'not a perforce file open for edit'
+        return
+    endif
+
+    let perforce_command = 'shelve'
+    let cl = s:PerforceGetCurrentChangelist(filename)
+
+    if cl !~# 'default'
+        let perforce_command .= ' -c ' . cl
+        if a:bang | let perforce_command .= ' -f' | endif
+        call s:PerforceSystem(perforce_command . ' ' . filename)
+    else
+        echom 'TODO equivalent of creating new changelist, or just do not support it'
+    endif
+
+endfunction
+
 " Call p4 revert.  Confirms before performing the revert.
 function! s:PerforceRevert(bang)
     let filename = expand('%')
-    if !s:PerforceValidAndOpen(filename)
+    if !s:PerforceOpened(filename)
         echom 'not a perforce file opened for edit'
         return
     endif
@@ -241,12 +262,11 @@ function! s:PerforceChange()
     augroup END
 endfunction
 
-
 " Prompt the user to move file currently being edited to a different changelist.
     " Present the user with a list of current changes.
 function! s:PerforceReopen()
     let filename = expand('%')
-    if !s:PerforceValidAndOpen(filename)
+    if !s:PerforceOpened(filename)
         echom 'not a perforce file opened for edit'
         return
     endif
@@ -259,8 +279,7 @@ function! s:PerforceReopen()
     call map(changes, 'v:key + 1 . ". " . v:val')
 
     " Prompt the user
-    let currentchangelist = split(s:PerforceSystem('fstat ' . filename
-            \ . ' | grep change | cut -d " " -f3'), '\n')[0]
+    let currentchangelist = s:PerforceGetCurrentChangelist(filename)
     echom filename . ' is currently open in change "' . currentchangelist
             \ . '" Select a changelist to move to: '
     let change = inputlist(changes + [len(changes) + 1 . '. default'])
