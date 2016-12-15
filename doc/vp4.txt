@@ -59,6 +59,15 @@ Hit 'q' to exit.
                                                                      *Vp4Edit*
 Opens current file for edit.
 
+                                                                  *Vp4Filelog*
+Populate the quick-fix or location list with the past revisions of this file.
+The file is not actually retrieved from the server until it is opened.  Lists
+in chronologically reverse order.
+
+Unset |g:vp4_open_loclist| to prevent the location list from being opened
+automatically.  Set |g:vp4_filelog_max| to limit the number of revisions
+listed.
+
                                                                    *Vp4Reopen*
 Move the current file to a different changelist.  Lists all open changelists
 and prompts for a selection.
@@ -96,6 +105,16 @@ OPTIONS                                                          *vp4-options*
                             set.
                             = 0 (default)
                             = 1
+
+*g:vp4_open_loclist*        Automatically open the location list after
+                            performing :Vp4Filelog
+                            = 0
+                            = 1 (default)
+
+*g:vp4_filelog_max*         Limit the number of revisions listed by
+                            :Vp4Filelog.  Runs faster with a smaller limit.
+                            = 10 (default)
+                            <= 0 lists all revisions
 ==============================================================================
 CREDITS                                                          *vp4-credits*
 

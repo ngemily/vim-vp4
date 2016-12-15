@@ -30,6 +30,8 @@ call s:set('g:vp4_prompt_on_write', 1)
 call s:set('g:vp4_prompt_on_modify', 0)
 call s:set('g:vp4_annotate_simple', 0)
 call s:set('g:vp4_annotate_revision', 0)
+call s:set('g:vp4_open_loclist', 1)
+call s:set('g:vp4_filelog_max', 10)
 call s:set('g:perforce_debug', 0)
 
 """ Helper functions
@@ -429,10 +431,89 @@ function! s:PerforceAnnotate() range
     syncbind
 endfunction
 
+" Populate the quick-fix or location list with the past revisions of this file.
+    " Only lists the files and some changelist data.  The file is not retrieved
+    " until the user opens it.
+function! s:PerforceFilelog()
+    let filename = expand('%')
+    if !s:PerforceValid(filename)
+        echom filename . ' not a perforce file'
+        return
+    endif
+
+    " Set up the command.  Limit the maximum number of entries.
+    let command = 'filelog'
+    if g:vp4_filelog_max > 0
+        let command .= ' ' . '-m ' . g:vp4_filelog_max
+    endif
+    let command .= ' ' . filename
+
+    " Compile all the location list data
+    let data = []
+    for line in split(s:PerforceSystem(command), '\n')
+        let fields = split(line, '\s')
+
+        " Cheap way to filter out irrelevant lines such as just the filename
+        " (which is the first line), or 'branch into' lines
+        if len(fields) < 8
+            continue
+        endif
+
+        " Set up dictionary entry
+        let entry = {}
+        let entry['filename'] = filename . fields[1]
+        let entry['text'] = join(fields[2:-1])
+
+        " Add it to the list
+        call add(data, entry)
+    endfor
+
+    " Populate the location list
+    call setloclist(0, data)
+
+    " Automatically open quick-fix or location list
+    if g:vp4_open_loclist
+        lopen
+    endif
+
+    " Set up autocommand to get the desired revision when opened.
+    augroup test
+        autocmd!
+        autocmd BufEnter *#* call <SID>PerforceOpenRevision()
+    augroup END
+
+endfunction
+
+" Expected to be called from opening file populated in quickfix list by
+    " Vp4Filelog command.  Works by calling 'p4 print', and the filename already
+    " has the revision specifier on the end.
+function! s:PerforceOpenRevision()
+    " Use buftype as a way to see if we've already gotten this file.
+    if &buftype == 'nofile'
+        return
+    else
+        setlocal buftype=nofile
+    endif
+
+    let filename = expand('%')
+    if !s:PerforceValid(filename)
+        echom filename . ' not a perforce file'
+        return
+    endif
+
+    " Grab the filetype from the original file extension
+    let filetype = matchstr(filename, '\.\zs[a-z]\+\ze#')
+    execute 'setlocal filetype=' . filetype
+
+    " Print the file to this buffer
+    silent call s:PerforceRead('print ' . shellescape(filename, 1))
+endfunction
+
 """ Register commands
 command! Vp4Diff call <SID>PerforceDiff()
 command! -range=% Vp4Annotate <line1>,<line2>call <SID>PerforceAnnotate()
 command! Vp4Change call <SID>PerforceChange()
+command! Vp4Filelog call <SID>PerforceFilelog()
 command! -bang Vp4Revert call <SID>PerforceRevert(<bang>0)
 command! Vp4Reopen call <SID>PerforceReopen()
 command! Vp4Edit call <SID>PerforceEdit()
