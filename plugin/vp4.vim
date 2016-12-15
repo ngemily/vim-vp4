@@ -73,9 +73,15 @@ function! s:PerforceWrite(cmd)
 endfunction
 
 " Possible scenarios:
+" Valid file:
 "   - file not under client root
-"   - file under root but not on client
-"   - file on client and not opened for edit
+"   - file not on client
+" Opened file:
+"   - file not on client and opened for add
+"   - file on client and opened for delete
+"   - file on client and opened for edit
+" Shelved file:
+"   - file shelved
 
 " Tests for both existence and opened
 function! s:PerforceValidAndOpen(filename)
@@ -166,6 +172,25 @@ function! s:PerforceWriteChange()
         set nomodified
         close
     endif
+endfunction
+
+" Call p4 add.
+function! s:PerforceAdd()
+    let filename = expand('%')
+
+    call s:PerforceSystem('add ' .filename)
+endfunction
+
+" Call p4 delete.
+function! s:PerforceDelete()
+    let filename = expand('%')
+    if !s:PerforceValid(filename)
+        echom 'not a valid perforce file'
+        return
+    endif
+
+    call s:PerforceSystem('delete ' .filename)
+    bdelete
 endfunction
 
 " Call p4 edit.
@@ -516,7 +541,9 @@ command! Vp4Change call <SID>PerforceChange()
 command! Vp4Filelog call <SID>PerforceFilelog()
 command! -bang Vp4Revert call <SID>PerforceRevert(<bang>0)
 command! Vp4Reopen call <SID>PerforceReopen()
+command! Vp4Delete call <SID>PerforceDelete()
 command! Vp4Edit call <SID>PerforceEdit()
+command! Vp4Add call <SID>PerforceAdd()
 
 augroup PromptOnWrite
     autocmd!

@@ -55,6 +55,13 @@ the change, quit (:q) to abort.
                                                                      *Vp4Diff*
 Opens the depot version of the current file in a vertical split, in diff mode.
 Hit 'q' to exit.
+Hit 'q' to exit.  With [s] diff with shelved.
+
+                                                                      *Vp4Add*
+Opens current file for add.
+
+                                                                   *Vp4Delete*
+Opens current file for delete.  Unloads current buffer.
 
                                                                      *Vp4Edit*
 Opens current file for edit.
