@@ -49,13 +49,22 @@ annotations will be misaligned on files that are currently being edited.
                                                                    *Vp4Change*
 Opens the change specification in a new split.  Equivalent to `p4 change -o`
 if current file is not already opened in a changelist and `p4 change -o -c
-<cl>` if already opened in a changelist.  Use the write (:w) command to make
+{cl}` if already opened in a changelist.  Use the write (:w) command to make
 the change, quit (:q) to abort.
 
                                                                      *Vp4Diff*
-Opens the depot version of the current file in a vertical split, in diff mode.
-Hit 'q' to exit.
-Hit 'q' to exit.  With [s] diff with shelved.
+:Vp4Diff [s][p][{cl}]
+With no arguments, the depot version of the current file in a vertical split,
+in diff mode.  Hit 'q' to exit.  
+
+    With [s] diff with shelved in current changelist.  Only available if file
+    is open for edit and shelved.
+
+    With [p] diff with previous version.  Available on any file that exists in
+    the depot.
+
+    With [{cl}] diff with shelved in changelist {cl}.  Available on any file
+    that exists in the depot, provided it is actually shelved in changelist.
 
                                                                       *Vp4Add*
 Opens current file for add.

@@ -114,10 +114,36 @@ function! s:PerforceValid(filename)
             \ 'not.*client') == ''
 endfunction
 
+" Test if 'filename' in shelved in changelist 'cl'
+function! s:PerforceIsShelved(filename, cl)
+    " Files on default changelist cannot be shelved
+    if a:cl == 'default'
+        return 0
+    endif
+
+    " Construct revision specification and test for shelved file
+    let file_specification = a:filename . '@=' . a:cl
+    if g:perforce_debug
+        echom matchstr(s:PerforceSystem('print ' . file_specification),
+                \ 'no file.*changelist number')
+    endif
+    return matchstr(s:PerforceSystem('print ' . file_specification),
+            \ 'no file.*changelist number') == ''
+endfunction
+
 " Return changelist that given file is open in
 function! s:PerforceGetCurrentChangelist(filename)
     return split(s:PerforceSystem('fstat ' . a:filename
                 \ . ' | grep change | cut -d " " -f3'), '\n')[0]
+endfunction
+
+" Return have revision number
+function! s:PerforceHaveRevision(filename)
+    let rev = matchstr(s:PerforceSystem('have ' . a:filename), '#\zs[0-9]\+\ze')
+    if g:perforce_debug
+        echom 'have revision ' . rev . ' of file ' . a:filename
+    endif
+    return rev
 endfunction
 
 " Return filename with appended 'have revision' specifier
@@ -131,29 +157,72 @@ endfunction
 
 """ Main functions
 " Open repository revision in diff mode
-function! s:PerforceDiff()
-    " Get the file name and revision
+    "  Options:
+    "  s       diffs with shelved in file's current changelist
+    "  s <cl>  diffs with shelved in given changelist
+function! s:PerforceDiff(...)
     let filename = expand('%')
-    if !s:PerforceValidAndOpen(filename)
+    if !s:PerforceValid(filename)
         echom filename . ' not perforce file opened for edit'
         return
     endif
-    let filename = s:PerforceAddHaveRevision(filename)
-    let filetype = &filetype
+
+    " Check for options
+    if a:0 >= 1 && type(a:1) == 0
+        " Diff with shelved in a:1
+        let cl = a:1
+        " Verify that the file is indeed shelved
+        if s:PerforceIsShelved(filename, cl)
+            let filename .= '@=' . cl
+        else
+            echom filename . 'is not shelved on change ' . cl
+            return
+        endif
+    elseif a:0 >= 1 && a:1 =~? 's'
+        " Diff with shelved in current changelist
+        let cl = s:PerforceGetCurrentChangelist(filename)
+
+        " Verify that the file is indeed shelved
+        if s:PerforceIsShelved(filename, cl)
+            let filename .= '@=' . cl
+        else
+            echom filename . 'is not shelved on change ' . cl
+            return
+        endif
+    elseif a:0 >= 1 && a:1 =~? 'p'
+        " Diff with previous version
+        let have_rev = s:PerforceHaveRevision(filename)
+        let prev_rev = have_rev - 1
+        let filename .= '#' . prev_rev
+
+        " If current revision is #1, its previous revision will be invalid.
+        if !s:PerforceValid(filename)
+            echom 'invalid revision' . filename
+            return
+        endif
+    else
+        " default: diff with have revision
+        if !s:PerforceValidAndOpen(filename)
+            echom 'file not open for edit'
+            return
+        endif
+        let filename = s:PerforceAddHaveRevision(filename)
+    endif
 
     " Setup current window
+    let filetype = &filetype
     diffthis
 
-    " Setup non modifiable buffer for perforce
-    rightbelow vnew
-    setlocal buftype=nofile bufhidden=wipe nobuflisted noswapfile nowrap
-    let perforce_command = 'print ' . filename
+    " Create the new window and populate it
+    leftabove vnew
+    let perforce_command = 'print ' . shellescape(filename, 1)
     silent call s:PerforceRead(perforce_command)
+
+    " Set local buffer options
+    setlocal buftype=nofile bufhidden=wipe nobuflisted noswapfile nowrap
     setlocal nomodifiable
     execute "set filetype=" . filetype
     diffthis
-
-    " q to exit
     nnoremap <buffer> <silent> q :<C-U>bdelete<CR> :windo diffoff<CR>
 endfunction
 
@@ -223,7 +292,8 @@ function! s:PerforceShelve(bang)
         if a:bang | let perforce_command .= ' -f' | endif
         call s:PerforceSystem(perforce_command . ' ' . filename)
     else
-        echom 'TODO equivalent of creating new changelist, or just do not support it'
+        echom 'Files open in the default changelist may not be shelved.  '
+                \ . 'Create a changelist first.'
     endif
 
 endfunction
@@ -535,7 +605,7 @@ function! s:PerforceOpenRevision()
 endfunction
 
 """ Register commands
-command! Vp4Diff call <SID>PerforceDiff()
+command! -nargs=? Vp4Diff call <SID>PerforceDiff(<f-args>)
 command! -range=% Vp4Annotate <line1>,<line2>call <SID>PerforceAnnotate()
 command! Vp4Change call <SID>PerforceChange()
 command! Vp4Filelog call <SID>PerforceFilelog()
@@ -544,6 +614,7 @@ command! Vp4Reopen call <SID>PerforceReopen()
 command! Vp4Delete call <SID>PerforceDelete()
 command! Vp4Edit call <SID>PerforceEdit()
 command! Vp4Add call <SID>PerforceAdd()
+command! -bang Vp4Shelve call <SID>PerforceShelve(<bang>0)
 
 augroup PromptOnWrite
     autocmd!
