@@ -66,8 +66,10 @@ Opens a view like:>
     +----------------------------------+------------------------+
 <
 
-Note: `p4 annotate` works only submitted revisions of files.  Therefore, the
-annotations will be misaligned on files that are currently being edited.
+Note: Annotations will be misaligned on files that are currently being edited.
+This is because `p4 annotate` works only submitted revisions of files.  To
+workaround this, it is suggested to open the last submitted revision of the
+filelog using :Vp4Filelog and run :Vp4Annotate on that.
 
                                                                      *Vp4Diff*
 :Vp4Diff [s][p][@{cl}][#{rev}]
