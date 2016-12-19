@@ -168,14 +168,22 @@ function! s:PerforceDiff(...)
     endif
 
     " Check for options
-    if a:0 >= 1 && type(a:1) == 0
+    if a:0 >= 1 && a:1[0] == '@'
         " Diff with shelved in a:1
-        let cl = a:1
+        let cl = split(a:1, '@')[0]
         " Verify that the file is indeed shelved
         if s:PerforceIsShelved(filename, cl)
             let filename .= '@=' . cl
         else
             echom filename . 'is not shelved on change ' . cl
+            return
+        endif
+    elseif a:0 >= 1 && a:1[0] == '#'
+        " Diff with revision a:1
+        let filename .= a:1
+        " If revision doesn't exist
+        if !s:PerforceValid(filename)
+            echom 'Invalid revision.'
             return
         endif
     elseif a:0 >= 1 && a:1 =~? 's'

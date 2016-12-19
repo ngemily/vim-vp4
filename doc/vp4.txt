@@ -70,7 +70,7 @@ Note: `p4 annotate` works only submitted revisions of files.  Therefore, the
 annotations will be misaligned on files that are currently being edited.
 
                                                                      *Vp4Diff*
-:Vp4Diff [s][p][{cl}]
+:Vp4Diff [s][p][@{cl}][#{rev}]
 With no arguments, the depot version of the current file in a vertical split,
 in diff mode.  Hit 'q' to exit.  
 
@@ -80,9 +80,10 @@ in diff mode.  Hit 'q' to exit.
     With [p] diff with previous version.  Available on any file that exists in
     the depot.
 
-    With [{cl}] diff with shelved in changelist {cl}.  Available on any file
+    With [@{cl}] diff with shelved in changelist {cl}.  Available on any file
     that exists in the depot, provided it is actually shelved in changelist.
 
+    With [#{rev}] diff with revision {rev}.
                                                                   *Vp4Filelog*
 Populate the quick-fix or location list with the past revisions of this file.
 The file is not actually retrieved from the server until it is opened.  Lists
