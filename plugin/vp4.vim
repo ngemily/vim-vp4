@@ -148,6 +148,9 @@ endfunction
 
 " Return filename with appended 'have revision' specifier
 function! s:PerforceAddHaveRevision(filename)
+    if matchstr(a:filename, '#') != ''
+        return a:filename
+    endif
     let rev = matchstr(s:PerforceSystem('have ' . a:filename), '#\zs[0-9]\+\ze')
     if g:perforce_debug
         echom 'have revision ' . rev . ' of file ' . a:filename
@@ -507,7 +510,7 @@ function! s:PerforceAnnotate() range
     if !g:vp4_annotate_revision
         let perforce_command .= ' -c'
     endif
-    let perforce_command .= ' ' . filename . '| cut -d: -f1'
+    let perforce_command .= ' ' . shellescape(filename, 1) . '| cut -d: -f1'
     call s:PerforceRead(perforce_command)
     g/^$/d
 
