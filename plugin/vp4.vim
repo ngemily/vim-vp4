@@ -45,6 +45,13 @@ function! s:PrePad(s,amt)
     return repeat(' ', a:amt - len(a:s)) . a:s
 endfunction
 
+" Echo an error message without the annoying 'Detected error in ...' header
+function! s:EchoError(msg)
+    echohl ErrorMsg
+    echom a:msg
+    echohl None
+endfunction
+
 " Return result of calling p4 command
 function! s:PerforceSystem(cmd)
     let command = g:vp4_perforce_executable . " " . a:cmd
@@ -72,67 +79,72 @@ function! s:PerforceWrite(cmd)
     execute command
 endfunction
 
+" Returns the value of a fstat field
+function! s:PerforceFstat(field, filename)
+    " NB: for some reason fstat was designed not to return an error code if
+    "   1. no such file
+    "   2. not shelved in changelist
+    "   3. no such revision
+    " It always starts a valid line with '...'; use it to validate response.
+    let s = s:PerforceSystem('fstat -T ' . a:field . ' ' . a:filename)
+    if v:shell_error || matchstr(s, '\.\.\.') == ''
+        call s:EchoError(a:filename . ' does not exist on server, or is not open')
+        return ''
+    endif
+
+    " Extract the value from the string which looks like:
+    "   ... headRev 65\n\n
+    let val = split(split(s, '\n')[0], ' ')[2]
+    if g:perforce_debug
+        echom 'fstat got value ' . val . ' for field ' . a:field 
+                \ . ' on file ' . a:filename
+    endif
+
+    return val
+endfunction
+
 " Tests only for opened.
 function! s:PerforceOpened(filename)
-    let command = 'fstat -T action' . a:filename
-    let msg = s:PerforceSystem(command)
-    if g:perforce_debug
-        echom msg
-    endif
-    return !v:shell_error
+    let action = s:PerforceFstat('action', a:filename)
+    return action != ''
 endfunction
 
-" Tests only for existence in depot
+" Tests for existence in depot
+    " Can be used to test existence of a specific revision, or shelved in a
+    " particular changelist by adding revision specifier to filename.
+    "
+    " Abbreviated summary:
+    "   #n    - revision 'n'
+    "   #have - have revision
+    "   @=n   - at changelist 'n' (shelved)
 function! s:PerforceExists(filename)
-    let command = 'fstat -T headRev ' . a:filename
-    let msg = s:PerforceSystem(command)
-    if g:perforce_debug
-        echom msg
-    endif
-    return !v:shell_error
-endfunction
-
-" Test if 'filename' in shelved in changelist 'cl'
-function! s:PerforceIsShelved(filename, cl)
-    " Files on default changelist cannot be shelved
-    if a:cl == 'default'
-        return 0
-    endif
-
-    " Construct revision specification and test for shelved file
-    let file_specification = a:filename . '@=' . a:cl
-    if g:perforce_debug
-        echom matchstr(s:PerforceSystem('print ' . file_specification),
-                \ 'no file.*changelist number')
-    endif
-    return matchstr(s:PerforceSystem('print ' . file_specification),
-            \ 'no file.*changelist number') == ''
+    let headRev = s:PerforceFstat('headRev', a:filename)
+    return headRev != ''
 endfunction
 
 " Return changelist that given file is open in
 function! s:PerforceGetCurrentChangelist(filename)
-    return split(s:PerforceSystem('fstat -T change ' . a:filename
-                \ . '| cut -d " " -f3'), '\n')[0]
+    return s:PerforceFstat('change', a:filename)
 endfunction
 
 " Return have revision number
 function! s:PerforceHaveRevision(filename)
-    let rev = matchstr(s:PerforceSystem('have ' . a:filename), '#\zs[0-9]\+\ze')
-    if g:perforce_debug
-        echom 'have revision ' . rev . ' of file ' . a:filename
-    endif
-    return rev
+    return s:PerforceFstat('haveRev', a:filename)
+endfunction
+
+" Return previous revision number, i.e. have_revision - 1
+function! s:PerforcePrevRevision(filename)
+    return s:PerforceFstat('haveRev', a:filename) - 1
 endfunction
 
 " Return filename with appended 'have revision' specifier
+    " TODO should be called something else, to avoid confusion with the result
+    " of `p4 have`
 function! s:PerforceAddHaveRevision(filename)
     if matchstr(a:filename, '#') != ''
         return a:filename
     endif
     let rev = s:PerforceHaveRevision(a:filename)
-    if g:perforce_debug
-        echom 'have revision ' . rev . ' of file ' . a:filename
-    endif
     return a:filename . '\#' . rev
 endfunction
 
@@ -140,66 +152,42 @@ endfunction
 " Open repository revision in diff mode
     "  Options:
     "  s       diffs with shelved in file's current changelist
-    "  s <cl>  diffs with shelved in given changelist
+    "  @cl     diffs with shelved in given changelist
+    "  p       diffs with previous revision (i.e. have revision - 1)
+    "  #rev    diffs with given revision
+    "  <none>  diffs with have revision
 function! s:PerforceDiff(...)
     let filename = expand('%')
-    if !s:PerforceExists(filename)
-        echom filename . ' not perforce file opened for edit'
-        return
-    endif
 
     " Check for options
+    " @cl: Diff with shelved in a:1
     if a:0 >= 1 && a:1[0] == '@'
-        " Diff with shelved in a:1
         let cl = split(a:1, '@')[0]
-        " Verify that the file is indeed shelved
-        if s:PerforceIsShelved(filename, cl)
-            let filename .= '@=' . cl
-        else
-            echom filename . 'is not shelved on change ' . cl
-            return
-        endif
+        let filename .= '@=' . cl
+    " #rev: Diff with revision a:1
     elseif a:0 >= 1 && a:1[0] == '#'
-        " Diff with revision a:1
         let filename .= a:1
-        " If revision doesn't exist
-        if !s:PerforceExists(filename)
-            echom 'Invalid revision.'
-            return
-        endif
+    " s: Diff with shelved in current changelist
     elseif a:0 >= 1 && a:1 =~? 's'
-        " Diff with shelved in current changelist
-        let cl = s:PerforceGetCurrentChangelist(filename)
-
-        " Verify that the file is indeed shelved
-        if s:PerforceIsShelved(filename, cl)
-            let filename .= '@=' . cl
-        else
-            echom filename . 'is not shelved on change ' . cl
-            return
-        endif
+        let filename .= '@=' . s:PerforceGetCurrentChangelist(filename)
+    " p: Diff with previous version
     elseif a:0 >= 1 && a:1 =~? 'p'
-        " Diff with previous version
-        let have_rev = s:PerforceHaveRevision(filename)
-        let prev_rev = have_rev - 1
-        let filename .= '#' . prev_rev
-
-        " If current revision is #1, its previous revision will be invalid.
-        if !s:PerforceExists(filename)
-            echom 'invalid revision' . filename
-            return
-        endif
+        let filename .= '#' . s:PerforcePrevRevision(filename)
+    " default: diff with have revision
     else
-        " default: diff with have revision
-        if !s:PerforceOpened(filename)
-            echom 'file not open for edit'
-            return
-        endif
-        let filename = s:PerforceAddHaveRevision(filename)
+        if !s:PerforceOpened(filename) | return | endif
+        let filename .= '#have'
+    endif
+
+    " Assert valid revision
+    if !s:PerforceExists(filename)
+        echom 'invalid revision' . filename
+        return
     endif
 
     " Setup current window
     let filetype = &filetype
+    bufdo diffoff
     diffthis
 
     " Create the new window and populate it
