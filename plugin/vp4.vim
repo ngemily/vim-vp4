@@ -72,46 +72,24 @@ function! s:PerforceWrite(cmd)
     execute command
 endfunction
 
-" Possible scenarios:
-" Valid file:
-"   - file not under client root
-"   - file not on client
-" Opened file:
-"   - file not on client and opened for add
-"   - file on client and opened for delete
-"   - file on client and opened for edit
-" Shelved file:
-"   - file shelved
-
-" Tests for both existence and opened
-function! s:PerforceValidAndOpen(filename)
-    if !s:PerforceValid(a:filename)
-        return 0
-    endif
-    if g:perforce_debug
-        echom matchstr(s:PerforceSystem('opened ' . a:filename), 'not.*client')
-    endif
-    return matchstr(s:PerforceSystem('opened ' . a:filename),
-            \ 'not.*client') == ''
-endfunction
-
 " Tests only for opened.
 function! s:PerforceOpened(filename)
+    let command = 'fstat -T action' . a:filename
+    let msg = s:PerforceSystem(command)
     if g:perforce_debug
-        echom matchstr(s:PerforceSystem('opened ' . a:filename),
-                \ 'not opened on this client')
+        echom msg
     endif
-    return matchstr(s:PerforceSystem('opened ' . a:filename),
-            \ 'not opened on this client') == ''
+    return !v:shell_error
 endfunction
 
 " Tests only for existence in depot
-function! s:PerforceValid(filename)
+function! s:PerforceExists(filename)
+    let command = 'fstat -T headRev ' . a:filename
+    let msg = s:PerforceSystem(command)
     if g:perforce_debug
-        echom matchstr(s:PerforceSystem('have ' . a:filename), 'not.*client')
+        echom msg
     endif
-    return matchstr(s:PerforceSystem('have ' . a:filename),
-            \ 'not.*client') == ''
+    return !v:shell_error
 endfunction
 
 " Test if 'filename' in shelved in changelist 'cl'
@@ -133,8 +111,8 @@ endfunction
 
 " Return changelist that given file is open in
 function! s:PerforceGetCurrentChangelist(filename)
-    return split(s:PerforceSystem('fstat ' . a:filename
-                \ . ' | grep change | cut -d " " -f3'), '\n')[0]
+    return split(s:PerforceSystem('fstat -T change ' . a:filename
+                \ . '| cut -d " " -f3'), '\n')[0]
 endfunction
 
 " Return have revision number
@@ -151,7 +129,7 @@ function! s:PerforceAddHaveRevision(filename)
     if matchstr(a:filename, '#') != ''
         return a:filename
     endif
-    let rev = matchstr(s:PerforceSystem('have ' . a:filename), '#\zs[0-9]\+\ze')
+    let rev = s:PerforceHaveRevision(a:filename)
     if g:perforce_debug
         echom 'have revision ' . rev . ' of file ' . a:filename
     endif
@@ -165,7 +143,7 @@ endfunction
     "  s <cl>  diffs with shelved in given changelist
 function! s:PerforceDiff(...)
     let filename = expand('%')
-    if !s:PerforceValid(filename)
+    if !s:PerforceExists(filename)
         echom filename . ' not perforce file opened for edit'
         return
     endif
@@ -185,7 +163,7 @@ function! s:PerforceDiff(...)
         " Diff with revision a:1
         let filename .= a:1
         " If revision doesn't exist
-        if !s:PerforceValid(filename)
+        if !s:PerforceExists(filename)
             echom 'Invalid revision.'
             return
         endif
@@ -207,13 +185,13 @@ function! s:PerforceDiff(...)
         let filename .= '#' . prev_rev
 
         " If current revision is #1, its previous revision will be invalid.
-        if !s:PerforceValid(filename)
+        if !s:PerforceExists(filename)
             echom 'invalid revision' . filename
             return
         endif
     else
         " default: diff with have revision
-        if !s:PerforceValidAndOpen(filename)
+        if !s:PerforceOpened(filename)
             echom 'file not open for edit'
             return
         endif
@@ -264,7 +242,7 @@ endfunction
 " Call p4 delete.
 function! s:PerforceDelete()
     let filename = expand('%')
-    if !s:PerforceValid(filename)
+    if !s:PerforceExists(filename)
         echom 'not a valid perforce file'
         return
     endif
@@ -276,7 +254,7 @@ endfunction
 " Call p4 edit.
 function! s:PerforceEdit()
     let filename = expand('%')
-    if !s:PerforceValid(filename)
+    if !s:PerforceExists(filename)
         echom 'not a valid perforce file'
         return
     endif
@@ -290,7 +268,7 @@ endfunction
 " Call p4 shelve
 function! s:PerforceShelve(bang)
     let filename = expand('%')
-    if !s:PerforceValidAndOpen(filename)
+    if !s:PerforceOpened(filename)
         echom 'not a perforce file open for edit'
         return
     endif
@@ -408,7 +386,7 @@ endfunction
 " prompt user to open for edit.
 function! s:PromptForOpen()
     let filename = expand('%')
-    if &readonly && s:PerforceValid(filename)
+    if &readonly && s:PerforceExists(filename)
         let do_edit = input(filename .
                 \' is not opened for edit.  p4 edit it now? [y/n]: ')
         if do_edit ==? 'y'
@@ -492,7 +470,7 @@ endfunction
     " fully annotated.
 function! s:PerforceAnnotate() range
     let filename = expand('%')
-    if !s:PerforceValid(filename)
+    if !s:PerforceExists(filename)
         echom filename . ' not a perforce file'
         return
     endif
@@ -543,7 +521,7 @@ endfunction
     " until the user opens it.
 function! s:PerforceFilelog()
     let filename = expand('%')
-    if !s:PerforceValid(filename)
+    if !s:PerforceExists(filename)
         echom filename . ' not a perforce file'
         return
     endif
@@ -603,7 +581,7 @@ function! s:PerforceOpenRevision()
     endif
 
     let filename = expand('%')
-    if !s:PerforceValid(filename)
+    if !s:PerforceExists(filename)
         echom filename . ' not a perforce file'
         return
     endif
