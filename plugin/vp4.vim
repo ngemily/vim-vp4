@@ -529,6 +529,10 @@ function! s:PerforceFilelog()
         return
     endif
 
+    " Remember some stuff about this file
+    let g:_vp4_filetype = &filetype
+    let g:_vp4_curpos = getcurpos()
+
     " Set up the command.  Limit the maximum number of entries.
     let command = 'filelog'
     if g:vp4_filelog_max > 0
@@ -550,6 +554,7 @@ function! s:PerforceFilelog()
         " Set up dictionary entry
         let entry = {}
         let entry['filename'] = filename . fields[1]
+        let entry['lnum'] = g:_vp4_curpos[1]
         let entry['text'] = join(fields[2:-1])
 
         " Add it to the list
@@ -589,12 +594,13 @@ function! s:PerforceOpenRevision()
         return
     endif
 
-    " Grab the filetype from the original file extension
-    let filetype = matchstr(filename, '\.\zs[a-z]\+\ze#')
-    execute 'setlocal filetype=' . filetype
-
     " Print the file to this buffer
-    silent call s:PerforceRead('print ' . shellescape(filename, 1))
+    silent call s:PerforceRead('print -q ' . shellescape(filename, 1))
+
+    " Use the information we remembered about the file where Filelog was invoked
+    execute 'setlocal filetype=' . g:_vp4_filetype
+    execute g:_vp4_curpos[1]
+
 endfunction
 
 """ Register commands
