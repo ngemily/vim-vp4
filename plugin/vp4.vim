@@ -104,7 +104,7 @@ function! s:PerforceFstat(field, filename)
     "   ... headRev 65\n\n
     let val = split(split(s, '\n')[0], ' ')[2]
     if g:perforce_debug
-        echom 'fstat got value ' . val . ' for field ' . a:field 
+        echom 'fstat got value ' . val . ' for field ' . a:field
                 \ . ' on file ' . a:filename
     endif
 

@@ -21,7 +21,8 @@ vp4 does the following:
     * Ridiculously functional annotation by adding more useful information
       such as the date, user, and description of the changelist
     * Fantastical diffing, including vs depot, vs shelved, vs previous rev
-    * File time-lapse browsing
+    * File history browsing, with with you can (fairly) easily diff two
+      arbitrary revisions of any file
 
 ==============================================================================
 COMMANDS                                                        *vp4-commands*
@@ -166,14 +167,21 @@ OPTIONS                                                          *vp4-options*
                             = 1
 
 *g:vp4_open_loclist*        Automatically open the location list after
-                            performing :Vp4Filelog
+                            performing |Vp4Filelog|
                             = 0
                             = 1 (default)
 
 *g:vp4_filelog_max*         Limit the number of revisions listed by
-                            :Vp4Filelog.  Runs faster with a smaller limit.
+                            |Vp4Filelog|.  Runs faster with a smaller limit.
                             = 10 (default)
                             <= 0 lists all revisions
+==============================================================================
+KNOWN ISSUES                                                      *vp4-issues*
+
+Extra line at top of depot file~
+In any command that issues a `p4 print`, i.e. any diff command, or opening
+other revisions of files, leaves an extra blank line at the top of the screen.
+
 ==============================================================================
 CREDITS                                                          *vp4-credits*
 
