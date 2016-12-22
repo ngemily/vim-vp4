@@ -53,6 +53,13 @@ function! s:EchoError(msg)
     echohl None
 endfunction
 
+" Echo a warning message
+function! s:EchoWarning(msg)
+    echohl WarningMsg
+    echom a:msg
+    echohl None
+endfunction
+
 " Return result of calling p4 command
 function! s:PerforceSystem(cmd)
     let command = g:vp4_perforce_executable . " " . a:cmd
@@ -145,8 +152,7 @@ function! s:PerforceAddHaveRevision(filename)
     if matchstr(a:filename, '#') != ''
         return a:filename
     endif
-    let rev = s:PerforceHaveRevision(a:filename)
-    return a:filename . '\#' . rev
+    return a:filename . '#' . s:PerforceHaveRevision(a:filename)
 endfunction
 
 """ Main functions
@@ -465,6 +471,11 @@ function! s:PerforceAnnotate() range
     if !s:PerforceExists(filename)
         echom filename . ' not a perforce file'
         return
+    endif
+
+    if s:PerforceOpened(filename)
+        call s:EchoWarning(filename
+                \ . ' is open for edit, annotations will likely be misaligned')
     endif
 
     " Use revision specific perforce commands
