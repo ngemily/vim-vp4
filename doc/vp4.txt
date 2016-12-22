@@ -74,7 +74,7 @@ filelog using :Vp4Filelog and run :Vp4Annotate on that.
                                                                      *Vp4Diff*
 :Vp4Diff [s][p][@{cl}][#{rev}]
 With no arguments, the depot version of the current file in a vertical split,
-in diff mode.  Hit 'q' to exit.  
+in diff mode.  Hit 'q' to exit.
 
     With [s] diff with shelved in current changelist.  Only available if file
     is open for edit and shelved.
@@ -145,6 +145,12 @@ OPTIONS                                                          *vp4-options*
                             already been opened for edit.
                             = 0 (default)
                             = 1
+
+*g:vp4_diff_suppress_header*
+                            Suppress perforce header information in file
+                            being diffed
+                            = 0
+                            = 1 (default)
 
 *g:vp4_annotate_simple*     Show only the changelist number when annotating.
                             Significantly speeds up |Vp4Annotate| by

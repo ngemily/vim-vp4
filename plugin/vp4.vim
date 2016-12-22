@@ -33,6 +33,7 @@ call s:set('g:vp4_annotate_revision', 0)
 call s:set('g:vp4_open_loclist', 1)
 call s:set('g:vp4_filelog_max', 10)
 call s:set('g:perforce_debug', 0)
+call s:set('g:vp4_diff_suppress_header', 1)
 
 """ Helper functions
 " Pad string by appending spaces until length of string 's' is equal to 'amt'
@@ -187,12 +188,15 @@ function! s:PerforceDiff(...)
 
     " Setup current window
     let filetype = &filetype
-    bufdo diffoff
     diffthis
 
     " Create the new window and populate it
     leftabove vnew
-    let perforce_command = 'print ' . shellescape(filename, 1)
+    let perforce_command = 'print'
+    if g:vp4_diff_suppress_header
+        let perforce_command .= ' -q'
+    endif
+    let perforce_command .= ' ' . shellescape(filename, 1)
     silent call s:PerforceRead(perforce_command)
 
     " Set local buffer options
