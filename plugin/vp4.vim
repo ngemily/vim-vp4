@@ -278,10 +278,10 @@ function! s:PerforceShelve(bang)
         let perforce_command .= ' -c ' . cl
         if a:bang | let perforce_command .= ' -f' | endif
         let msg = split(s:PerforceSystem(perforce_command . ' ' . filename), '\n')
-        if v:shell_error | echoe msg[-1] | endif
+        if v:shell_error | call s:EchoError(msg[-1]) | endif
     else
-        echoe 'Files open in the default changelist may not be shelved.  '
-                \ . 'Create a changelist first.'
+        call s:EchoError('Files open in the default changelist'
+                \ . ' may not be shelved.  Create a changelist first.')
     endif
 
 endfunction
