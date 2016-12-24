@@ -312,11 +312,6 @@ endfunction
     " Uses the -o/-i options to avoid the confirmation on abort.
     " Works by opening a new window to write your change description.
 function! s:PerforceChange()
-    " Open a new split to hold the change specification.  Clear it in case of
-    " any previous invocations.
-    topleft new __perforce_change__
-    normal! ggdG
-
     " If this file is already in a changelist, allow the user to modify that
     " changelist by calling `p4 change -o <cl#>`.  Otherwise, call for default
     " changelist by omitting the changelist argument.
@@ -331,6 +326,12 @@ function! s:PerforceChange()
     else
         let lnr = 26
     endif
+
+    " Open a new split to hold the change specification.  Clear it in case of
+    " any previous invocations.
+    topleft new __perforce_change__
+    normal! ggdG
+
     silent call s:PerforceRead(perforce_command)
 
     " Reset the 'modified' option so that only user modifications are captured
