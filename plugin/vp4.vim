@@ -312,19 +312,19 @@ endfunction
     " Uses the -o/-i options to avoid the confirmation on abort.
     " Works by opening a new window to write your change description.
 function! s:PerforceChange()
+    let filename = expand('%')
+    let perforce_command = 'change -o'
+    let lnr = 26
+
     " If this file is already in a changelist, allow the user to modify that
     " changelist by calling `p4 change -o <cl#>`.  Otherwise, call for default
     " changelist by omitting the changelist argument.
-    let perforce_command = 'change -o'
-    let filename = expand('%')
     if s:PerforceOpened(filename)
         let changelist = s:PerforceGetCurrentChangelist(filename)
         if changelist
             let perforce_command .= ' ' . changelist
             let lnr = 28
         endif
-    else
-        let lnr = 26
     endif
 
     " Open a new split to hold the change specification.  Clear it in case of
