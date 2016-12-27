@@ -75,7 +75,10 @@ function! s:PerforceRead(cmd)
     if g:perforce_debug
         echom "DBG: " . command
     endif
+    " Populate the window and get rid of the extra line at the top
     execute command
+    1
+    execute 'normal! dd'
 endfunction
 
 " Use current buffer as stdin to p4 command
@@ -327,7 +330,7 @@ endfunction
 function! s:PerforceChange()
     let filename = expand('%')
     let perforce_command = 'change -o'
-    let lnr = 26
+    let lnr = 25
 
     " If this file is already in a changelist, allow the user to modify that
     " changelist by calling `p4 change -o <cl#>`.  Otherwise, call for default
@@ -336,7 +339,7 @@ function! s:PerforceChange()
         let changelist = s:PerforceGetCurrentChangelist(filename)
         if changelist
             let perforce_command .= ' ' . changelist
-            let lnr = 28
+            let lnr = 27
         endif
     endif
 
@@ -501,7 +504,6 @@ function! s:PerforceAnnotate() range
     endif
     let perforce_command .= ' ' . shellescape(filename, 1) . '| cut -d: -f1'
     call s:PerforceRead(perforce_command)
-    g/^$/d
 
     " Perform full annotation
     if !g:vp4_annotate_simple && !g:vp4_annotate_revision
