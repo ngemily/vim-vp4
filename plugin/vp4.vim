@@ -215,77 +215,7 @@ endfunction
 " }}}
 
 " {{{ Main functions
-" Open repository revision in diff mode
-    "  Options:
-    "  s       diffs with shelved in file's current changelist
-    "  @cl     diffs with shelved in given changelist
-    "  p       diffs with previous revision (i.e. have revision - 1)
-    "  #rev    diffs with given revision
-    "  <none>  diffs with have revision
-function! s:PerforceDiff(...)
-    let filename = expand('%')
-
-    " Check for options
-    " @cl: Diff with shelved in a:1
-    if a:0 >= 1 && a:1[0] == '@'
-        let cl = split(a:1, '@')[0]
-        let filename .= '@=' . cl
-    " #rev: Diff with revision a:1
-    elseif a:0 >= 1 && a:1[0] == '#'
-        let filename .= a:1
-    " s: Diff with shelved in current changelist
-    elseif a:0 >= 1 && a:1 =~? 's'
-        let filename .= '@=' . s:PerforceGetCurrentChangelist(filename)
-    " p: Diff with previous version
-    elseif a:0 >= 1 && a:1 =~? 'p'
-        let filename = s:PerforceAddPrevRevision(filename)
-    " default: diff with have revision
-    else
-        if !s:PerforceAssertOpened(filename) | return | endif
-        let filename .= '#have'
-    endif
-
-    " Assert valid revision
-    if !s:PerforceAssertExists(filename) | return | endif
-
-    " Setup current window
-    let filetype = &filetype
-    diffthis
-
-    " Create the new window and populate it
-    leftabove vnew
-    let perforce_command = 'print'
-    if g:vp4_diff_suppress_header
-        let perforce_command .= ' -q'
-    endif
-    let perforce_command .= ' ' . shellescape(filename, 1)
-    silent call s:PerforceRead(perforce_command)
-
-    " Set local buffer options
-    setlocal buftype=nofile bufhidden=wipe nobuflisted noswapfile nowrap
-    setlocal nomodifiable
-    execute "set filetype=" . filetype
-    diffthis
-    nnoremap <buffer> <silent> q :<C-U>bdelete<CR> :windo diffoff<CR>
-endfunction
-
-" Use contents of buffer to send a change specification
-function! s:PerforceWriteChange()
-    silent call s:PerforceWrite('change -i')
-
-    " If the change was made successfully, mark the file as no longer modified
-    " (so that Vim doesn't warn user that a file has been modified but not
-    " written on exit) and close the window.
-    "
-    " Note: leaves an open buffer.  Unloading a buffer in an autocommand issues
-    " an error message, so this buffer has been intentionally left open by the
-    " author.
-    if !v:shell_error
-        set nomodified
-        close
-    endif
-endfunction
-
+" {{{ File editing
 " Call p4 add.
 function! s:PerforceAdd()
     let filename = expand('%')
@@ -313,6 +243,27 @@ function! s:PerforceEdit()
     execute 'edit ' filename
 endfunction
 
+" Call p4 revert.  Confirms before performing the revert.
+function! s:PerforceRevert(bang)
+    let filename = expand('%')
+    if !s:PerforceAssertOpened(filename) | return | endif
+
+    if !a:bang
+        let do_revert = input('Are you sure you want to revert ' . filename
+                \ . '? [y/n]: ')
+    endif
+
+    if a:bang || do_revert ==? 'y'
+        call s:PerforceSystem('revert ' .filename)
+        set nomodified
+    endif
+
+    " reload the file to refresh &readonly attribute
+    execute 'edit ' filename
+endfunction
+" }}}
+
+" {{{ Change specification
 " Call p4 shelve
 function! s:PerforceShelve(bang)
     let filename = expand('%')
@@ -333,23 +284,21 @@ function! s:PerforceShelve(bang)
 
 endfunction
 
-" Call p4 revert.  Confirms before performing the revert.
-function! s:PerforceRevert(bang)
-    let filename = expand('%')
-    if !s:PerforceAssertOpened(filename) | return | endif
+" Use contents of buffer to send a change specification
+function! s:PerforceWriteChange()
+    silent call s:PerforceWrite('change -i')
 
-    if !a:bang
-        let do_revert = input('Are you sure you want to revert ' . filename
-                \ . '? [y/n]: ')
-    endif
-
-    if a:bang || do_revert ==? 'y'
-        call s:PerforceSystem('revert ' .filename)
+    " If the change was made successfully, mark the file as no longer modified
+    " (so that Vim doesn't warn user that a file has been modified but not
+    " written on exit) and close the window.
+    "
+    " Note: leaves an open buffer.  Unloading a buffer in an autocommand issues
+    " an error message, so this buffer has been intentionally left open by the
+    " author.
+    if !v:shell_error
         set nomodified
+        close
     endif
-
-    " reload the file to refresh &readonly attribute
-    execute 'edit ' filename
 endfunction
 
 " Call p4 change
@@ -421,18 +370,61 @@ function! s:PerforceReopen()
     let perforce_command = 'reopen -c ' . change_number . ' ' . filename
     call s:PerforceSystem(perforce_command)
 endfunction
+" }}}
 
-" Check if file exists in the depot and is not already opened for edit.  If so,
-" prompt user to open for edit.
-function! s:PromptForOpen()
+" {{{ Analysis
+" Open repository revision in diff mode
+    "  Options:
+    "  s       diffs with shelved in file's current changelist
+    "  @cl     diffs with shelved in given changelist
+    "  p       diffs with previous revision (i.e. have revision - 1)
+    "  #rev    diffs with given revision
+    "  <none>  diffs with have revision
+function! s:PerforceDiff(...)
     let filename = expand('%')
-    if &readonly && s:PerforceAssertExists(filename)
-        let do_edit = input(filename .
-                \' is not opened for edit.  p4 edit it now? [y/n]: ')
-        if do_edit ==? 'y'
-            call s:PerforceSystem('edit ' .filename)
-        endif
+
+    " Check for options
+    " @cl: Diff with shelved in a:1
+    if a:0 >= 1 && a:1[0] == '@'
+        let cl = split(a:1, '@')[0]
+        let filename .= '@=' . cl
+    " #rev: Diff with revision a:1
+    elseif a:0 >= 1 && a:1[0] == '#'
+        let filename .= a:1
+    " s: Diff with shelved in current changelist
+    elseif a:0 >= 1 && a:1 =~? 's'
+        let filename .= '@=' . s:PerforceGetCurrentChangelist(filename)
+    " p: Diff with previous version
+    elseif a:0 >= 1 && a:1 =~? 'p'
+        let filename = s:PerforceAddPrevRevision(filename)
+    " default: diff with have revision
+    else
+        if !s:PerforceAssertOpened(filename) | return | endif
+        let filename .= '#have'
     endif
+
+    " Assert valid revision
+    if !s:PerforceAssertExists(filename) | return | endif
+
+    " Setup current window
+    let filetype = &filetype
+    diffthis
+
+    " Create the new window and populate it
+    leftabove vnew
+    let perforce_command = 'print'
+    if g:vp4_diff_suppress_header
+        let perforce_command .= ' -q'
+    endif
+    let perforce_command .= ' ' . shellescape(filename, 1)
+    silent call s:PerforceRead(perforce_command)
+
+    " Set local buffer options
+    setlocal buftype=nofile bufhidden=wipe nobuflisted noswapfile nowrap
+    setlocal nomodifiable
+    execute "set filetype=" . filetype
+    diffthis
+    nnoremap <buffer> <silent> q :<C-U>bdelete<CR> :windo diffoff<CR>
 endfunction
 
 " Syntax highlighting for annotation data
@@ -608,6 +600,21 @@ function! s:PerforceFilelog()
     endif
 
 endfunction
+" }}}
+
+" {{{ Passive (called by auto commands)
+" Check if file exists in the depot and is not already opened for edit.  If so,
+" prompt user to open for edit.
+function! s:PromptForOpen()
+    let filename = expand('%')
+    if &readonly && s:PerforceAssertExists(filename)
+        let do_edit = input(filename .
+                \' is not opened for edit.  p4 edit it now? [y/n]: ')
+        if do_edit ==? 'y'
+            call s:PerforceSystem('edit ' .filename)
+        endif
+    endif
+endfunction
 
 " Expected to be called from opening file populated in quickfix list by
     " Vp4Filelog command.  Works by calling 'p4 print', and the filename already
@@ -632,18 +639,6 @@ function! s:PerforceOpenRevision()
 
 endfunction
 " }}}
-
-" {{{ Register commands
-command! -nargs=? Vp4Diff call <SID>PerforceDiff(<f-args>)
-command! -range=% Vp4Annotate <line1>,<line2>call <SID>PerforceAnnotate()
-command! Vp4Change call <SID>PerforceChange()
-command! Vp4Filelog call <SID>PerforceFilelog()
-command! -bang Vp4Revert call <SID>PerforceRevert(<bang>0)
-command! Vp4Reopen call <SID>PerforceReopen()
-command! Vp4Delete call <SID>PerforceDelete()
-command! Vp4Edit call <SID>PerforceEdit()
-command! Vp4Add call <SID>PerforceAdd()
-command! -bang Vp4Shelve call <SID>PerforceShelve(<bang>0)
 " }}}
 
 " {{{ Auto-commands
@@ -662,4 +657,18 @@ augroup OpenRevision
     autocmd BufEnter *#* call <SID>PerforceOpenRevision()
 augroup END
 " }}}
+
+" {{{ Register commands
+command! -nargs=? Vp4Diff call <SID>PerforceDiff(<f-args>)
+command! -range=% Vp4Annotate <line1>,<line2>call <SID>PerforceAnnotate()
+command! Vp4Change call <SID>PerforceChange()
+command! Vp4Filelog call <SID>PerforceFilelog()
+command! -bang Vp4Revert call <SID>PerforceRevert(<bang>0)
+command! Vp4Reopen call <SID>PerforceReopen()
+command! Vp4Delete call <SID>PerforceDelete()
+command! Vp4Edit call <SID>PerforceEdit()
+command! Vp4Add call <SID>PerforceAdd()
+command! -bang Vp4Shelve call <SID>PerforceShelve(<bang>0)
+" }}}
+
 " vim: foldenable foldmethod=marker
