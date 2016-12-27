@@ -3,7 +3,7 @@
 " Last Change:  Nov 22, 2016
 " Author:       Emily Ng
 
-""" Initialization
+" {{{ Initialization
 if exists('g:loaded_vp4') || !executable('p4') || &cp
     finish
 endif
@@ -34,8 +34,14 @@ call s:set('g:vp4_open_loclist', 1)
 call s:set('g:vp4_filelog_max', 10)
 call s:set('g:perforce_debug', 0)
 call s:set('g:vp4_diff_suppress_header', 1)
+call s:set('g:_vp4_curpos', [0, 0, 0, 0])
+call s:set('g:_vp4_filetype', 'txt')
 
-""" Helper functions
+" }}}
+
+" {{{ Helper functions
+
+" {{{ Generic Helper functions
 " Pad string by appending spaces until length of string 's' is equal to 'amt'
 function! s:Pad(s,amt)
     return a:s . repeat(' ',a:amt - len(a:s))
@@ -59,7 +65,9 @@ function! s:EchoWarning(msg)
     echom a:msg
     echohl None
 endfunction
+" }}}
 
+" {{{ Perforce system functions
 " Return result of calling p4 command
 function! s:PerforceSystem(cmd)
     let command = g:vp4_perforce_executable . " " . a:cmd
@@ -89,7 +97,9 @@ function! s:PerforceWrite(cmd)
     endif
     execute command
 endfunction
+" }}}
 
+" {{{ Perforce checker infrastructure
 " Returns the value of a fstat field
     " Throws an error if it failed.  It is up to the *caller* to catch the error
     " and issue an appropriate message.
@@ -136,6 +146,9 @@ function! s:PerforceQuery(field, filename)
     endtry
     return retval
 endfunction
+" }}}
+
+" {{{ Perforce field checkers
 
 " Tests for existence in depot.  Issues error message upon failure.
     " Can be used to test existence of a specific revision, or shelved in a
@@ -170,7 +183,9 @@ endfunction
 function! s:PerforceHaveRevision(filename)
     return s:PerforceQuery('haveRev', a:filename)
 endfunction
+" }}}
 
+" {{{ Perforce revision specfication helpers
 " Return filename with appended 'have revision' specifier
     " If editing a file with the revision already embedded in the name, return
     " that instead.
@@ -196,8 +211,10 @@ function! s:PerforceAddPrevRevision(filename)
         return a:filename . '#' . prev_rev
     endif
 endfunction
+" }}}
+" }}}
 
-""" Main functions
+" {{{ Main functions
 " Open repository revision in diff mode
     "  Options:
     "  s       diffs with shelved in file's current changelist
@@ -590,12 +607,6 @@ function! s:PerforceFilelog()
         lopen
     endif
 
-    " Set up autocommand to get the desired revision when opened.
-    augroup test
-        autocmd!
-        autocmd BufEnter *#* call <SID>PerforceOpenRevision()
-    augroup END
-
 endfunction
 
 " Expected to be called from opening file populated in quickfix list by
@@ -620,8 +631,9 @@ function! s:PerforceOpenRevision()
     execute g:_vp4_curpos[1]
 
 endfunction
+" }}}
 
-""" Register commands
+" {{{ Register commands
 command! -nargs=? Vp4Diff call <SID>PerforceDiff(<f-args>)
 command! -range=% Vp4Annotate <line1>,<line2>call <SID>PerforceAnnotate()
 command! Vp4Change call <SID>PerforceChange()
@@ -632,7 +644,9 @@ command! Vp4Delete call <SID>PerforceDelete()
 command! Vp4Edit call <SID>PerforceEdit()
 command! Vp4Add call <SID>PerforceAdd()
 command! -bang Vp4Shelve call <SID>PerforceShelve(<bang>0)
+" }}}
 
+" {{{ Auto-commands
 augroup PromptOnWrite
     autocmd!
     if g:vp4_prompt_on_write
@@ -642,3 +656,10 @@ augroup PromptOnWrite
         autocmd FileChangedRO * call <SID>PromptForOpen()
     endif
 augroup END
+
+augroup OpenRevision
+    autocmd!
+    autocmd BufEnter *#* call <SID>PerforceOpenRevision()
+augroup END
+" }}}
+" vim: foldenable foldmethod=marker
