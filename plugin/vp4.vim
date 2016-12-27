@@ -484,6 +484,9 @@ function! s:PerforceAnnotate() range
     let filename = expand('%')
     if !s:PerforceAssertExists(filename) | return | endif
 
+    " `p4 annotate` can only operate on revisions that exist in the depot.  If a
+    " file is open for edit, only the annotations for the #have revision can be
+    " given.  Issue a warning of the user tries to do this.
     if s:PerforceOpened(filename)
         call s:EchoWarning(filename
                 \ . ' is open for edit, annotations will likely be misaligned')
