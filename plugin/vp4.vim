@@ -171,19 +171,30 @@ function! s:PerforceHaveRevision(filename)
     return s:PerforceQuery('haveRev', a:filename)
 endfunction
 
-" Return previous revision number, i.e. have_revision - 1
-function! s:PerforcePrevRevision(filename)
-    return s:PerforceQuery('haveRev', a:filename) - 1
+" Return filename with appended 'have revision' specifier
+    " If editing a file with the revision already embedded in the name, return
+    " that instead.
+function! s:PerforceAddHaveRevision(filename)
+    let embedded_rev = matchstr(a:filename, '#\zs[0-9]\+\ze')
+    if embedded_rev != ''
+        return a:filename
+    else
+        return a:filename . '#' . s:PerforceHaveRevision(a:filename)
+    endif
 endfunction
 
-" Return filename with appended 'have revision' specifier
-    " TODO should be called something else, to avoid confusion with the result
-    " of `p4 have`
-function! s:PerforceAddHaveRevision(filename)
-    if matchstr(a:filename, '#') != ''
-        return a:filename
+" Return filename with appended 'have revision - 1' specifier
+    " If editing a file with the revision aleady embedded in the name, return
+    " the revision before that instead.
+function! s:PerforceAddPrevRevision(filename)
+    let embedded_rev = matchstr(a:filename, '#\zs[0-9]\+\ze')
+    if embedded_rev != ''
+        let prev_rev = embedded_rev - 1
+        return substitute(a:filename, embedded_rev, prev_rev, "")
+    else
+        let prev_rev = s:PerforceHaveRevision(a:filename) - 1
+        return a:filename . '#' . prev_rev
     endif
-    return a:filename . '#' . s:PerforceHaveRevision(a:filename)
 endfunction
 
 """ Main functions
@@ -210,7 +221,7 @@ function! s:PerforceDiff(...)
         let filename .= '@=' . s:PerforceGetCurrentChangelist(filename)
     " p: Diff with previous version
     elseif a:0 >= 1 && a:1 =~? 'p'
-        let filename .= '#' . s:PerforcePrevRevision(filename)
+        let filename = s:PerforceAddPrevRevision(filename)
     " default: diff with have revision
     else
         if !s:PerforceAssertOpened(filename) | return | endif
