@@ -322,7 +322,7 @@ function! s:PerforceChange()
 
     " Open a new split to hold the change specification.  Clear it in case of
     " any previous invocations.
-    topleft new __perforce_change__
+    topleft new __vp4_change__
     normal! ggdG
 
     silent call s:PerforceRead(perforce_command)
@@ -334,7 +334,7 @@ function! s:PerforceChange()
     execute lnr
 
     " Replace write command (:w) with call to write change specification.
-    " Prevents the buffer __perforce_change__ from being written to disk
+    " Prevents the buffer __vp4_change__ from being written to disk
     augroup WriteChange
         autocmd! * <buffer>
         autocmd BufWriteCmd <buffer> call <SID>PerforceWriteChange()
@@ -411,7 +411,7 @@ function! s:PerforceDiff(...)
     diffthis
 
     " Create the new window and populate it
-    leftabove vnew
+    execute 'leftabove vnew ' . shellescape(filename, 1)
     let perforce_command = 'print'
     if g:vp4_diff_suppress_header
         let perforce_command .= ' -q'
@@ -422,6 +422,7 @@ function! s:PerforceDiff(...)
     " Set local buffer options
     setlocal buftype=nofile bufhidden=wipe nobuflisted noswapfile nowrap
     setlocal nomodifiable
+    setlocal nomodified
     execute "set filetype=" . filetype
     diffthis
     nnoremap <buffer> <silent> q :<C-U>bdelete<CR> :windo diffoff<CR>
@@ -520,7 +521,7 @@ function! s:PerforceAnnotate() range
     let saved_bufnr = bufnr(bufname("%"))
 
     " Open a split and perform p4 annotate command
-    leftabove vnew
+    silent leftabove vnew Vp4Annotate
     let perforce_command = 'annotate -q'
     if !g:vp4_annotate_revision
         let perforce_command .= ' -c'
