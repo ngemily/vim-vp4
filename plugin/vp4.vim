@@ -32,16 +32,22 @@ call s:set('g:vp4_annotate_simple', 0)
 call s:set('g:vp4_annotate_revision', 0)
 call s:set('g:vp4_open_loclist', 1)
 call s:set('g:vp4_filelog_max', 10)
-call s:set('g:perforce_debug', 0)
+call s:set('g:perforce_debug', 1)
 call s:set('g:vp4_diff_suppress_header', 1)
+call s:set('g:vp4_print_suppress_header', 1)
 call s:set('g:_vp4_curpos', [0, 0, 0, 0])
 call s:set('g:_vp4_filetype', 'txt')
+call s:set('g:vp4_allow_open_depot_file', 1)
 
 " }}}
 
 " {{{ Helper functions
 
 " {{{ Generic Helper functions
+function! s:BufferIsEmpty()
+    return line('$') == 1 && getline(1) == ''
+endfunction
+
 " Pad string by appending spaces until length of string 's' is equal to 'amt'
 function! s:Pad(s,amt)
     return a:s . repeat(' ',a:amt - len(a:s))
@@ -72,28 +78,31 @@ endfunction
 function! s:PerforceSystem(cmd)
     let command = g:vp4_perforce_executable . " " . a:cmd
     if g:perforce_debug
-        echom "DBG: " . command
+        echom "DBG sys: " . command
     endif
     return system(command)
 endfunction
 
 " Append results of p4 command to current buffer
 function! s:PerforceRead(cmd)
+    let _modifiable = &modifiable
+    set modifiable
     let command = '$read !' . g:vp4_perforce_executable . " " . a:cmd
     if g:perforce_debug
-        echom "DBG: " . command
+        echom "DBG read: " . command
     endif
     " Populate the window and get rid of the extra line at the top
     execute command
     1
     execute 'normal! dd'
+    let &modifiable=_modifiable
 endfunction
 
 " Use current buffer as stdin to p4 command
 function! s:PerforceWrite(cmd)
     let command = 'write !' . g:vp4_perforce_executable . " " . a:cmd
     if g:perforce_debug
-        echom "DBG: " . command
+        echom "DBG write: " . command
     endif
     execute command
 endfunction
@@ -167,6 +176,11 @@ endfunction
 function! s:PerforceAssertOpened(filename)
     let msg = a:filename . ' not opened for change'
     return  s:PerforceAssert('action', a:filename, msg) != ''
+endfunction
+
+" Tests for opened.
+function! s:PerforceExists(filename)
+    return s:PerforceQuery('headRev', a:filename) != ''
 endfunction
 
 " Tests for opened.
@@ -617,6 +631,7 @@ function! s:PromptForOpen()
         let do_edit = input(filename .
                 \' is not opened for edit.  p4 edit it now? [y/n]: ')
         if do_edit ==? 'y'
+            setlocal autoread
             call s:PerforceSystem('edit ' .filename)
         endif
     endif
@@ -644,6 +659,51 @@ function! s:PerforceOpenRevision()
     execute g:_vp4_curpos[1]
 
 endfunction
+
+" Open the local file if it exists, otherwise print the contents from the
+" server.
+function! s:CheckServerPath()
+    " test for existence of depot file
+    let filename = expand('%')
+    if !s:PerforceExists(expand('%')) | return | endif
+
+    " check for existence of local file
+    let client_file = s:PerforceQuery('clientFile', filename)
+    if !empty(glob(client_file))
+        let old_bufnr = bufnr('%')
+        let old_bufname = bufname('%')
+        execute 'edit ' . client_file
+        let new_bufnr = bufnr('%')
+        let new_bufname = bufname('%')
+
+        if g:perforce_debug
+            echom 'old: ' . old_bufnr . ' ' . old_bufname
+            echom 'new: ' . new_bufnr . ' ' . new_bufname
+        endif
+
+        execute 'buffer ' . new_bufnr
+        execute 'doauto BufRead'
+        execute 'bdelete! ' . old_bufname
+
+        return
+    endif
+
+    " get the file contents
+    let perforce_command = 'print'
+    if g:vp4_print_suppress_header
+        let perforce_command .= ' -q '
+    endif
+    let perforce_command .= shellescape(filename, 1)
+    call s:PerforceRead(perforce_command)
+
+    " get filetype
+    execute 'doauto BufRead ' . substitute(filename, '#.*', '', '')
+
+    set buftype=nofile
+    set nomodifiable
+
+endfunction
+
 " }}}
 " }}}
 
@@ -655,6 +715,13 @@ augroup PromptOnWrite
     endif
     if g:vp4_prompt_on_modify
         autocmd FileChangedRO * call <SID>PromptForOpen()
+    endif
+augroup END
+
+augroup Vp4Enter
+    autocmd!
+    if g:vp4_allow_open_depot_file
+        autocmd VimEnter,BufReadCmd //* call <SID>CheckServerPath()
     endif
 augroup END
 " }}}
