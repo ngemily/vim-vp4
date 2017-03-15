@@ -32,7 +32,7 @@ call s:set('g:vp4_annotate_simple', 0)
 call s:set('g:vp4_annotate_revision', 0)
 call s:set('g:vp4_open_loclist', 1)
 call s:set('g:vp4_filelog_max', 10)
-call s:set('g:perforce_debug', 1)
+call s:set('g:perforce_debug', 0)
 call s:set('g:vp4_diff_suppress_header', 1)
 call s:set('g:vp4_print_suppress_header', 1)
 call s:set('g:_vp4_curpos', [0, 0, 0, 0])
@@ -121,7 +121,12 @@ function! s:PerforceFstat(field, filename)
     " It does return -1 if an invalid field was requested.
     let s = s:PerforceSystem('fstat -T ' . a:field . ' ' . a:filename)
     if v:shell_error || matchstr(s, '\.\.\.') == ''
-        throw 'PerforceFstatError'
+        if matchstr(s, 'P4PASSWD') != ''
+            call s:EchoError(split(s, '\n')[0])
+            return 0
+        else
+            throw 'PerforceFstatError'
+        endif
     endif
 
     " Extract the value from the string which looks like:
