@@ -470,6 +470,7 @@ function! s:PerforceAnnotateFull(lbegin, lend)
     let data = {}
     let last_cl = 0
 
+    set modifiable
     let lnr = a:lbegin
     while lnr && lnr <= a:lend
         let line = getline(lnr)
@@ -522,6 +523,8 @@ function! s:PerforceAnnotateFull(lbegin, lend)
         let last_cl = line
         let lnr = nextnonblank(lnr + 1)
     endwhile
+
+    set nomodifiable
 endfunction
 
 " Open a scrollbound split containing on each line the changelist number in
@@ -561,6 +564,7 @@ function! s:PerforceAnnotate() range
     endif
 
     " Clean up buffer, set local options, move cursor to saved position
+    set modifiable
     %right
     setlocal buftype=nofile bufhidden=wipe nobuflisted noswapfile nowrap
     setlocal nonumber norelativenumber
@@ -568,6 +572,7 @@ function! s:PerforceAnnotate() range
     call setpos('.', saved_curpos)
     set cursorbind scrollbind
     vertical resize 80
+    set nomodifiable
 
     " q to exit
     nnoremap <buffer> <silent> q :<C-U>bdelete<CR>
