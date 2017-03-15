@@ -204,7 +204,12 @@ function! s:PerforceHaveRevision(filename)
 endfunction
 " }}}
 
-" {{{ Perforce revision specfication helpers
+" {{{ Perforce revision specification helpers
+" Return filename with any revision specifier stripped
+function! s:PerforceStripRevision(filename)
+    return split(a:filename, '#')[0]
+endfunction
+
 " Return filename with appended 'have revision' specifier
     " If editing a file with the revision already embedded in the name, return
     " that instead.
@@ -403,13 +408,15 @@ function! s:PerforceDiff(...)
     let filename = expand('%')
 
     " Check for options
+    "   'a:0' is set to the number of extra arguments
+    "   a:1 is the first extra argument, a:2 the second, etc.
     " @cl: Diff with shelved in a:1
     if a:0 >= 1 && a:1[0] == '@'
         let cl = split(a:1, '@')[0]
         let filename .= '@=' . cl
     " #rev: Diff with revision a:1
     elseif a:0 >= 1 && a:1[0] == '#'
-        let filename .= a:1
+        let filename = s:PerforceStripRevision(filename) . a:1
     " s: Diff with shelved in current changelist
     elseif a:0 >= 1 && a:1 =~? 's'
         let filename .= '@=' . s:PerforceGetCurrentChangelist(filename)
@@ -576,7 +583,7 @@ endfunction
     " Only lists the files and some changelist data.  The file is not retrieved
     " until the user opens it.
 function! s:PerforceFilelog()
-    let filename = expand('%')
+    let filename = s:PerforceStripRevision(expand('%'))
     if !s:PerforceAssertExists(filename) | return | endif
 
     " Remember some stuff about this file
