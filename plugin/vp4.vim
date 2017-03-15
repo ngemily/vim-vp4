@@ -600,6 +600,11 @@ function! s:PerforceFilelog()
         lopen
     endif
 
+    " Set auto command for opening specific revisions of files
+    augroup OpenRevision
+        autocmd!
+        autocmd BufEnter *#* call <SID>PerforceOpenRevision()
+    augroup END
 endfunction
 " }}}
 
@@ -651,11 +656,6 @@ augroup PromptOnWrite
     if g:vp4_prompt_on_modify
         autocmd FileChangedRO * call <SID>PromptForOpen()
     endif
-augroup END
-
-augroup OpenRevision
-    autocmd!
-    autocmd BufEnter *#* call <SID>PerforceOpenRevision()
 augroup END
 " }}}
 
