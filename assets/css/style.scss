@@ -1,0 +1,13 @@
+---
+---
+
+@import "jekyll-theme-minimal";
+
+.option{
+    ul {
+        list-style: none;
+    }
+    ul li:before {
+        content: '= ';
+    }
+}
