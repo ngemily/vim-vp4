@@ -301,6 +301,8 @@ function! s:PerforceShelve(bang)
         if a:bang | let perforce_command .= ' -f' | endif
         let msg = split(s:PerforceSystem(perforce_command . ' ' . filename), '\n')
         if v:shell_error | call s:EchoError(msg[-1]) | endif
+        let msg = filename . ' shelved in p4:' . cl
+        echom msg
     else
         call s:EchoError('Files open in the default changelist'
                 \ . ' may not be shelved.  Create a changelist first.')
@@ -670,6 +672,7 @@ function! s:PerforceOpenRevision()
 
     " Print the file to this buffer
     silent call s:PerforceRead('print -q ' . shellescape(filename, 1))
+    setlocal nomodifiable
 
     " Use the information we remembered about the file where Filelog was invoked
     execute 'setlocal filetype=' . g:_vp4_filetype
