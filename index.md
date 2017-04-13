@@ -35,6 +35,7 @@ vp4 does the following:
         - [Vp4Filelog]
     - [Change specification](#change-specification)
         - [Vp4Change]
+        - [Vp4Describe]
         - [Vp4Shelve]
     - [File editing](#file-editing)
         - [Vp4Add]
@@ -118,6 +119,13 @@ Opens the change specification in a new split.  Equivalent to `p4 change -o`
 if current file is not already opened in a changelist and `p4 change -o -c
 {cl}` if already opened in a changelist.  Use the write `:w` command to make
 the change, quit `:q` to abort.
+
+<div class="command" id="Vp4Describe">
+`:Vp4Describe`
+</div>
+
+Opens a preview window containing a description of the changelist in which the
+current file is open, obtained from `p4 describe <cl>`
 
 <div class="command" id="Vp4Shelve">
 `:Vp4Shelve[!]`

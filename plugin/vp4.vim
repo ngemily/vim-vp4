@@ -367,6 +367,32 @@ function! s:PerforceChange()
     augroup END
 endfunction
 
+" Call `p4 describe` on the changelist of the current file, if any.  Show the
+" output in a preview window.
+function! s:PerforceDescribe()
+
+    let filename = expand('%')
+    let current_changelist = s:PerforceGetCurrentChangelist(filename)
+
+    if !current_changelist
+        call s:EchoWarning(filename . ' is not open in a named changelist')
+        return
+    endif
+
+    " open a preview window
+    pedit __vp4_describe__
+    wincmd P
+
+    " call p4 describe
+    normal! ggdG
+    let perforce_command = "describe " . current_changelist
+    silent call s:PerforceRead(perforce_command)
+    setlocal buftype=nofile bufhidden=wipe nobuflisted noswapfile nowrap
+
+    " return to original windown
+    wincmd p
+endfunction
+
 " Prompt the user to move file currently being edited to a different changelist.
     " Present the user with a list of current changes.
 function! s:PerforceReopen()
@@ -757,6 +783,7 @@ command! Vp4Delete call <SID>PerforceDelete()
 command! Vp4Edit call <SID>PerforceEdit()
 command! Vp4Add call <SID>PerforceAdd()
 command! -bang Vp4Shelve call <SID>PerforceShelve(<bang>0)
+command! Vp4Describe call <SID>PerforceDescribe()
 " }}}
 
 " vim: foldenable foldmethod=marker

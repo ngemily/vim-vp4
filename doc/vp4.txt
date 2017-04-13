@@ -36,6 +36,7 @@ ANALYSIS - These commands query and display information about a file.
 CHANGE SPECIFICATION - These commands perform actions on changelists.
 
     Change...|Vp4Change|
+    Describe.|Vp4Describe|
     Shelve...|Vp4Shelve|
 
 FILE EDITING - These commands perform actions on files that alter their state
@@ -103,6 +104,10 @@ Opens the change specification in a new split.  Equivalent to `p4 change -o`
 if current file is not already opened in a changelist and `p4 change -o -c
 {cl}` if already opened in a changelist.  Use the write (:w) command to make
 the change, quit (:q) to abort.
+
+                                                                 *Vp4Describe*
+Opens a preview window containing a description of the changelist in which the
+current file is open, obtained from `p4 describe <cl>`
 
                                                                    *Vp4Shelve*
 :Vp4Shelve[!]
