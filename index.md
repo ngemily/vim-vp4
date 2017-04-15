@@ -1,19 +1,7 @@
 ---
 layout: default
+show_downloads: true
 ---
-
-_Integration with Perforce.  Inspired by
-[tpope/vim-fugitive](https://github.com/tpope/vim-fugitive)._
-
-                                       ___
-                                      //| |
-                          ___   __ __//_| |_
-                          \  \ // '_ \__  __|
-                           \  V/| |_) ; | |
-                            \_/ | .--'  |_|
-                                | |
-                                \_|
-
 
 ## Intro
 
