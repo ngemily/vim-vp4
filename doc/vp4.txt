@@ -122,7 +122,9 @@ FILE EDITING
 Opens current file for add.
 
                                                                    *Vp4Delete*
-Opens current file for delete.  Unloads current buffer.
+:Vp4Delete[!]
+Opens current file for delete.  Unloads current buffer.  Confirms before doing
+so; use [!] to skip confirmation.
 
                                                                      *Vp4Edit*
 Opens current file for edit.

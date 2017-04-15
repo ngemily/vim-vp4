@@ -147,10 +147,11 @@ _These commands perform actions on files that alter their state in Perforce._
 Opens current file for add.
 
 <div class="command" id="Vp4Delete">
-`:Vp4Delete`
+`:Vp4Delete[!]`
 </div>
 
-Opens current file for delete.  Unloads current buffer.
+Opens current file for delete.  Unloads current buffer.  Confirms before doing
+so; use [!] to skip confirmation.
 
 <div class="command" id="Vp4Edit">
 `:Vp4Edit`

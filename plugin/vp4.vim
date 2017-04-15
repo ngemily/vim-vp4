@@ -259,12 +259,20 @@ function! s:PerforceAdd()
 endfunction
 
 " Call p4 delete.
-function! s:PerforceDelete()
+function! s:PerforceDelete(bang)
     let filename = expand('%')
     if !s:PerforceAssertExists(filename) | return | endif
 
-    call s:PerforceSystem('delete ' .filename)
-    bdelete
+    if !a:bang
+        let do_delete = input('Are you sure you want to delete ' . filename
+                \ . '? [y/n]: ')
+    endif
+
+    if a:bang || do_delete ==? 'y'
+        call s:PerforceSystem('delete ' .filename)
+        bdelete
+    endif
+
 endfunction
 
 " Call p4 edit.
@@ -789,8 +797,8 @@ command! -range=% Vp4Annotate <line1>,<line2>call <SID>PerforceAnnotate()
 command! Vp4Change call <SID>PerforceChange()
 command! Vp4Filelog call <SID>PerforceFilelog()
 command! -bang Vp4Revert call <SID>PerforceRevert(<bang>0)
+command! -bang Vp4Delete call <SID>PerforceDelete(<bang>0)
 command! Vp4Reopen call <SID>PerforceReopen()
-command! Vp4Delete call <SID>PerforceDelete()
 command! Vp4Edit call <SID>PerforceEdit()
 command! Vp4Add call <SID>PerforceAdd()
 command! -bang Vp4Shelve call <SID>PerforceShelve(<bang>0)
