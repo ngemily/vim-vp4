@@ -210,16 +210,27 @@ function! s:PerforceStripRevision(filename)
     return split(a:filename, '#')[0]
 endfunction
 
-" Return filename with appended 'have revision' specifier
-    " If editing a file with the revision already embedded in the name, return
-    " that instead.
-function! s:PerforceAddHaveRevision(filename)
+" Return filename with appended revision specifier
+"
+" Priority list:
+"   1. Embedded revision specifier in filename
+"   2. Synced revision
+"   3. Head revision (no specifier required)
+function! s:PerforceAddRevision(filename)
+    " embedded revision
     let embedded_rev = matchstr(a:filename, '#\zs[0-9]\+\ze')
     if embedded_rev != ''
         return a:filename
-    else
-        return a:filename . '#' . s:PerforceHaveRevision(a:filename)
     endif
+
+    " have revision
+    let have_revision = s:PerforceHaveRevision(a:filename)
+    if have_revision
+        return a:filename . '#' . have_revision
+    endif
+
+    " no specifier
+    return a:filename
 endfunction
 
 " Return filename with appended 'have revision - 1' specifier
@@ -571,7 +582,7 @@ function! s:PerforceAnnotate() range
     endif
 
     " Use revision specific perforce commands
-    let filename = s:PerforceAddHaveRevision(filename)
+    let filename = s:PerforceAddRevision(filename)
 
     " Save the cursor position and buffer number
     let saved_curpos = getcurpos()
