@@ -3,6 +3,25 @@
 
 @import "jekyll-theme-minimal";
 
+aside {
+    width:270px;
+    float:left;
+    position:fixed;
+    top:210px;
+}
+
+aside ul {
+    list-style-type: none;
+}
+
+.toc-active {
+    font-weight: bold;
+}
+
+.toc-h2 {
+    padding-left: 10px;
+}
+
 .option{
     ul {
         list-style: none;
@@ -11,3 +30,13 @@
         content: '= ';
     }
 }
+
+@media print, screen and (max-width: 960px) {
+    aside {
+        float:none;
+        position:static;
+        width:auto;
+    }
+}
+
+

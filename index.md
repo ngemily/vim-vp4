@@ -26,27 +26,6 @@ vp4 does the following:
 - Fantastical **diffing**, including vs _depot_, vs _shelved_, vs _previous_ rev
 - **File history** browsing; Make Vim _a Perforce time machine_
 
-## Summary
-
-- [Commands](#commands)
-    - [Analysis](#analysis)
-        - [Vp4Annotate]
-        - [Vp4Diff]
-        - [Vp4Filelog]
-    - [Change specification](#change-specification)
-        - [Vp4Change]
-        - [Vp4Describe]
-        - [Vp4Shelve]
-    - [File editing](#file-editing)
-        - [Vp4Add]
-        - [Vp4Delete]
-        - [Vp4Edit]
-        - [Vp4Reopen]
-        - [Vp4Revert]
-- [Passive Features](#passive-features)
-    - [Prompt for edit](#prompt-for-edit)
-    - [Open depot file](#open-depot-file)
-
 ## Commands
 
 ### Analysis
