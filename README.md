@@ -1,8 +1,3 @@
----
-layout: default
-show_downloads: true
----
-
 ## Intro
 
 vp4 does the following:
@@ -64,8 +59,8 @@ Populate the quick-fix or location list with the past revisions of this file.
 The file is not actually retrieved from the server until it is opened.  Lists
 in chronologically reverse order.
 
-Unset [g:vp4_open_loclist] to prevent the location list from being opened
-automatically.  Set [g:vp4_filelog_max] to limit the number of revisions
+Unset `g:vp4_open_loclist` to prevent the location list from being opened
+automatically.  Set `g:vp4_filelog_max` to limit the number of revisions
 listed.
 
 ### Change specification
@@ -122,12 +117,12 @@ confirmation.
 
 ### Prompt for edit
 
-When writing a file, set [g:vp4_prompt_on_write] to enable prompt on write to
+When writing a file, set `g:vp4_prompt_on_write` to enable prompt on write to
 `p4 edit` the file.
 
 ### Open depot file
 
-Set [g:vp4_allow_open_depot_file] to allow vim to be invoked on a depot path
+Set `g:vp4_allow_open_depot_file` to allow vim to be invoked on a depot path
 specification, like `vim //main/foo/bar/baz.cpp` where:
 
 - if the file has been synced into the workspace, open the local file
@@ -166,7 +161,7 @@ Suppress perforce header information in file being diffed
 `g:vp4_annotate_simple`     
 
 Show only the changelist number when annotating.  Significantly speeds up
-[Vp4Annotate] by eliminating calls to `p4 open`.
+`Vp4Annotate` by eliminating calls to `p4 open`.
 
 - 0 (default)
 - 1
@@ -181,14 +176,14 @@ Full annotation (username, date, description) is not available if set.
 
 `g:vp4_open_loclist`        
 
-Automatically open the location list after performing [Vp4Filelog]
+Automatically open the location list after performing `Vp4Filelog`
 
 - 0
 - 1 (default)
 
 `g:vp4_filelog_max`         
 
-Limit the number of revisions listed by [Vp4Filelog].  Runs faster with a
+Limit the number of revisions listed by `Vp4Filelog`.  Runs faster with a
 smaller limit.
 
 - 10 (default)
@@ -204,25 +199,3 @@ open that file.  Otherwise, open a new buffer with the server file contents.
 This plugin was heavily inspired by vim-fugitive.  Additionally, the author
 was helped greatly by the book Learn Vimscript the Hard Way and Vim's
 excellent built-in documentation.
-
-[g:vp4_perforce_executable]:   #g:vp4_perforce_executable
-[g:vp4_prompt_on_write]:       #g:vp4_prompt_on_write
-[g:vp4_prompt_on_modify]:      #g:vp4_prompt_on_modify
-[g:vp4_diff_suppress_header]:  #g:vp4_diff_suppress_header
-[g:vp4_annotate_simple]:       #g:vp4_annotate_simple
-[g:vp4_annotate_revision]:     #g:vp4_annotate_revision
-[g:vp4_open_loclist]:          #g:vp4_open_loclist
-[g:vp4_filelog_max]:           #g:vp4_filelog_max
-[g:vp4_allow_open_depot_file]: #g:vp4_allow_open_depot_file
-
-[Vp4Annotate]: #Vp4Annotate
-[Vp4Diff]:     #Vp4Diff
-[Vp4Filelog]:  #Vp4Filelog
-[Vp4Change]:   #Vp4Change
-[Vp4Shelve]:   #Vp4Shelve
-[Vp4Add]:      #Vp4Add
-[Vp4Delete]:   #Vp4Delete
-[Vp4Edit]:     #Vp4Edit
-[Vp4Reopen]:   #Vp4Reopen
-[Vp4Revert]:   #Vp4Revert
-[Vp4Describe]:   #Vp4Describe

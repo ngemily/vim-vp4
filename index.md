@@ -28,7 +28,7 @@ Opens a scrollbound split showing the changelist where each line was last
 modified, and the date, user, and description of the changelist.  This feature
 is slow on large files with many different last changes.  To speed it up,
 visually select lines to fully annotate (recommended), or use
-|g:vp4_annotate_simple| to show only the changelist number.  `q` exits.
+[g:vp4_annotate_simple] to show only the changelist number.  `q` exits.
 
 Opens a view like
 
