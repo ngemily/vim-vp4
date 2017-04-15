@@ -297,3 +297,4 @@ excellent built-in documentation.
 [Vp4Edit]:     #Vp4Edit
 [Vp4Reopen]:   #Vp4Reopen
 [Vp4Revert]:   #Vp4Revert
+[Vp4Describe]:   #Vp4Describe
