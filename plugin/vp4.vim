@@ -80,7 +80,11 @@ function! s:PerforceSystem(cmd)
     if g:perforce_debug
         echom "DBG sys: " . command
     endif
-    return system(command)
+    let retval = system(command)
+    if v:shell_error
+        call s:EchoError(split(retval, '\n')[0])
+    endif
+    return retval
 endfunction
 
 " Append results of p4 command to current buffer
