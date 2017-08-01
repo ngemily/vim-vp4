@@ -728,16 +728,24 @@ endfunction
 
 " Open the local file if it exists, otherwise print the contents from the
 " server.
+"   //main/foo.cpp      opens haveRev or headRev
+"   //main/foo.cpp#2    opens #2
+"   foo.cpp#2           opens #2
+"   foo.cpp             does nothing
 function! s:CheckServerPath()
     " test for existence of depot file
     let filename = expand('%')
     if !s:PerforceExists(expand('%')) | return | endif
 
+    let requested_rev = matchstr(filename, '#[0-9]\+')
+    let requested_rev = strpart(requested_rev, 1)
+
     " check for existence of local file
-    let client_file = s:PerforceQuery('clientFile', filename)
-    if !empty(glob(client_file))
+    let have_rev = s:PerforceQuery('haveRev', filename)
+    if have_rev == requested_rev
         let old_bufnr = bufnr('%')
         let old_bufname = bufname('%')
+        let client_file = s:PerforceQuery('clientFile', filename)
         execute 'edit ' . client_file
         let new_bufnr = bufnr('%')
         let new_bufname = bufname('%')
@@ -755,7 +763,7 @@ function! s:CheckServerPath()
     endif
 
     " get the file contents
-    let perforce_command = 'print'
+    let perforce_command = 'print '
     if g:vp4_print_suppress_header
         let perforce_command .= ' -q '
     endif
@@ -765,8 +773,8 @@ function! s:CheckServerPath()
     " get filetype
     execute 'doauto BufRead ' . substitute(filename, '#.*', '', '')
 
-    set buftype=nofile
-    set nomodifiable
+    setlocal buftype=nofile
+    setlocal nomodifiable
 
 endfunction
 
@@ -787,7 +795,7 @@ augroup END
 augroup Vp4Enter
     autocmd!
     if g:vp4_allow_open_depot_file
-        autocmd VimEnter,BufReadCmd //* call <SID>CheckServerPath()
+        autocmd VimEnter,BufReadCmd \(//\)\|\(#[0-9]\+\)  call <SID>CheckServerPath()
     endif
 augroup END
 " }}}
