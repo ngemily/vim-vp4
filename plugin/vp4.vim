@@ -81,9 +81,6 @@ function! s:PerforceSystem(cmd)
         echom "DBG sys: " . command
     endif
     let retval = system(command)
-    if v:shell_error
-        call s:EchoError(split(retval, '\n')[0])
-    endif
     return retval
 endfunction
 
