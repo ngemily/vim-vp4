@@ -250,6 +250,25 @@ endfunction
 " }}}
 
 " {{{ Main functions
+
+" {{{ System
+function! s:PerforceSystemWr(...)
+    let cmd = join(map(copy(a:000), 'expand(v:val)'))
+
+    " open a preview window
+    pedit __vp4_scratch__
+    wincmd P
+
+    " call p4 describe
+    normal! ggdG
+    silent call s:PerforceRead(cmd)
+    setlocal buftype=nofile bufhidden=wipe nobuflisted noswapfile nowrap
+
+    " return to original windown
+    wincmd p
+endfunction
+" }}}
+
 " {{{ File editing
 " Call p4 add.
 function! s:PerforceAdd()
@@ -811,6 +830,7 @@ command! Vp4Edit call <SID>PerforceEdit()
 command! Vp4Add call <SID>PerforceAdd()
 command! -bang Vp4Shelve call <SID>PerforceShelve(<bang>0)
 command! Vp4Describe call <SID>PerforceDescribe()
+command! -nargs=+ Vp4 call <SID>PerforceSystemWr(<f-args>)
 " }}}
 
 " vim: foldenable foldmethod=marker

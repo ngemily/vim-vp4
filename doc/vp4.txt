@@ -138,6 +138,12 @@ and prompts for a selection.
 Reverts current file.  Confirms before doing so.  Use [!] to skip
 confirmation.
 
+------------------------------------------------------------------------------
+SYSTEM
+                                                                         *Vp4*
+:Vp4 <command>
+Run arbitrary perforce command.  Results are shown in a preview window.
+
 ==============================================================================
 PASSIVE FEATURES                                                 *vp4-passive*
 
