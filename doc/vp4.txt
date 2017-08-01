@@ -51,12 +51,12 @@ FILE EDITING - These commands perform actions on files that alter their state
 ------------------------------------------------------------------------------
 ANALYSIS
                                                                  *Vp4Annotate*
-:[range]Vp4Annotate
+:[range]Vp4Annotate [q]
 Opens a scrollbound split showing the changelist where each line was last
 modified, and the date, user, and description of the changelist.  This feature
 is slow on large files with many different last changes.  To speed it up,
-visually select lines to fully annotate (recommended), or use
-|g:vp4_annotate_simple| to show only the changelist number.  'q' exits.
+visually select lines to fully annotate (recommended), or use the q option
+to show only the changelist number.  'q' exits.
 
 Opens a view like:>
     +----------------------------------+------------------------+
@@ -172,12 +172,6 @@ OPTIONS                                                          *vp4-options*
                             being diffed
                             = 0
                             = 1 (default)
-
-*g:vp4_annotate_simple*     Show only the changelist number when annotating.
-                            Significantly speeds up |Vp4Annotate| by
-                            eliminating calls to `p4 open`.
-                            = 0 (default)
-                            = 1
 
 *g:vp4_annotate_revision*   Show revision number instead of changelist number
                             in which line was changed.  Full annotation

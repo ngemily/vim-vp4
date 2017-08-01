@@ -28,7 +28,6 @@ endfunction
 call s:set('g:vp4_perforce_executable', 'p4')
 call s:set('g:vp4_prompt_on_write', 1)
 call s:set('g:vp4_prompt_on_modify', 0)
-call s:set('g:vp4_annotate_simple', 0)
 call s:set('g:vp4_annotate_revision', 0)
 call s:set('g:vp4_open_loclist', 1)
 call s:set('g:vp4_filelog_max', 10)
@@ -578,7 +577,7 @@ endfunction
 " Open a scrollbound split containing on each line the changelist number in
     " which it was last edited.  Accepts a range to limit the section being
     " fully annotated.
-function! s:PerforceAnnotate() range
+function! s:PerforceAnnotate(...) range
     let filename = expand('%')
     if !s:PerforceAssertExists(filename) | return | endif
 
@@ -607,7 +606,7 @@ function! s:PerforceAnnotate() range
     call s:PerforceRead(perforce_command)
 
     " Perform full annotation
-    if !g:vp4_annotate_simple && !g:vp4_annotate_revision
+    if !(a:0 > 0 && a:1 == 'q') && !g:vp4_annotate_revision
         call s:PerforceAnnotateFull(a:firstline, a:lastline)
     endif
 
@@ -802,7 +801,7 @@ augroup END
 
 " {{{ Register commands
 command! -nargs=? Vp4Diff call <SID>PerforceDiff(<f-args>)
-command! -range=% Vp4Annotate <line1>,<line2>call <SID>PerforceAnnotate()
+command! -range=% -nargs=? Vp4Annotate <line1>,<line2>call <SID>PerforceAnnotate(<f-args>)
 command! Vp4Change call <SID>PerforceChange()
 command! Vp4Filelog call <SID>PerforceFilelog()
 command! -bang Vp4Revert call <SID>PerforceRevert(<bang>0)
