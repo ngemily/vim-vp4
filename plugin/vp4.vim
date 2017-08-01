@@ -831,6 +831,7 @@ command! Vp4Add call <SID>PerforceAdd()
 command! -bang Vp4Shelve call <SID>PerforceShelve(<bang>0)
 command! Vp4Describe call <SID>PerforceDescribe()
 command! -nargs=+ Vp4 call <SID>PerforceSystemWr(<f-args>)
+command! Vp4Info call <SID>PerforceSystemWr('fstat ' . expand('%'))
 " }}}
 
 " vim: foldenable foldmethod=marker

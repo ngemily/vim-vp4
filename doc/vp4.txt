@@ -31,6 +31,7 @@ ANALYSIS - These commands query and display information about a file.
 
     Annotate.|Vp4Annotate|
     Diff.....|Vp4Diff|
+    Info.....|Vp4Info|
     Filelog..|Vp4Filelog|
 
 CHANGE SPECIFICATION - These commands perform actions on changelists.
@@ -88,6 +89,10 @@ in diff mode.  Hit 'q' to exit.
     that exists in the depot, provided it is actually shelved in changelist.
 
     With [#{rev}] diff with revision {rev}.
+
+                                                                     *Vp4Info*
+Call `fstat` on this file.
+
                                                                   *Vp4Filelog*
 Populate the quick-fix or location list with the past revisions of this file.
 The file is not actually retrieved from the server until it is opened.  Lists
