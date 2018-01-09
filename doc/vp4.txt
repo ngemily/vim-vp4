@@ -21,7 +21,7 @@ vp4 does the following:
     * Ridiculously functional annotation by adding more useful information
       such as the date, user, and description of the changelist
     * Fantastical diffing, including vs depot, vs shelved, vs previous rev
-    * File history browsing, with with you can (fairly) easily diff two
+    * File history browsing, with which you can (fairly) easily diff two
       arbitrary revisions of any file
 
 ==============================================================================
