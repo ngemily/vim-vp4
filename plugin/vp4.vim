@@ -760,7 +760,7 @@ function! s:CheckServerPath()
 
     " check for existence of local file
     let have_rev = s:PerforceQuery('haveRev', filename)
-    if have_rev == requested_rev
+    if len(requested_rev) == 0 || have_rev == requested_rev
         let old_bufnr = bufnr('%')
         let old_bufname = bufname('%')
         let client_file = s:PerforceQuery('clientFile', filename)
