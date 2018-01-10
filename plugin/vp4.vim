@@ -811,8 +811,11 @@ function! s:PerforceExplore()
 
     let perforce_command = 'dirs ' . filepath
     call s:PerforceRead(perforce_command)
+
     let perforce_command = 'files -e ' . filepath
-    call s:PerforceRead(perforce_command)
+    let filenames = split(s:PerforceSystem(perforce_command), '\n')
+    call map(filenames, {idx, val -> split(val)[0]})
+    call append(line('$'), filenames)
 
     nnoremap <script> <silent> <buffer> <CR> :call <sid>ExplorerGoTo()<CR>
     nnoremap <script> <silent> <buffer> q    :quit<CR>
