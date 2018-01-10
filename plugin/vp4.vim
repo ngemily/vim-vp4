@@ -8,6 +8,7 @@ if exists('g:loaded_vp4') || !executable('p4') || &cp
     finish
 endif
 let g:loaded_vp4 = 1
+let s:directory_data = {}
 
 function! vp4#sid()
     return maparg('<SID>', 'n')
@@ -800,29 +801,69 @@ endfunction
 " {{{ Depot explorer
 function! s:ExplorerGoTo()
     let filename = split(getline('.'))[0]
-    call s:CheckServerPath(filename)
+    if strpart(filename, strlen(filename) - 1, 1) == '/'
+        " toggle fold/unfold
+        echom 'dir'
+    else
+        call s:CheckServerPath(filename)
+    endif
+endfunction
+
+" Render the directory data as a tree, using `a:key` as the root
+function! s:ExplorerRender(key, level)
+    let d = get(s:directory_data, a:key)
+    let prefix = repeat(' ', a:level * 4)
+    call append(line('$'), prefix . d.name)
+    if !d.folded
+        " print children
+        for child in get(d, 'children', [])
+            call s:ExplorerRender(child, a:level + 1)
+        endfor
+        " print files
+        let prefix .= repeat(' ', 4)
+        for filename in get(d, 'files', [])
+            call append(line('$'), prefix .filename)
+        endfor
+    endif
 endfunction
 
 function! s:PerforceExplore()
     silent leftabove vnew Depot
     setlocal buftype=nofile
 
-    let filepath = '"' . expand('%:h') . '/*"'
+    let filepath = expand('%:p:h')
+    let pattern = '"' . filepath . '/*"'
 
-    let perforce_command = 'dirs ' . filepath
+    let perforce_command = 'dirs ' . pattern
     let dirnames = split(s:PerforceSystem(perforce_command), '\n')
-    call map(dirnames, {idx, val -> split(val, '/')[-1] . '/'})
-    call append(line('$'), dirnames)
+    for dirname in dirnames
+        let s:directory_data[dirname] = {
+                    \'name' : split(dirname, '/')[-1] . '/',
+                    \'folded' : 1
+                    \}
+    endfor
 
-    let perforce_command = 'files -e ' . filepath
+    let perforce_command = 'files -e ' . pattern
     let filenames = split(s:PerforceSystem(perforce_command), '\n')
     call map(filenames, {idx, val -> split(split(val)[0], '/')[-1]})
-    call append(line('$'), filenames)
 
-    " d = {
-    " 'name' : "acds",
-    " 'folded' : 0,
-    " 'files' : ['foo#1', 'bar#2']
+    let s:directory_data[filepath] = {
+                \'name' : split(filepath, '/')[-1] . '/',
+                \'children' : dirnames,
+                \'folded' : 0,
+                \'files' : filenames
+                \}
+
+    call s:ExplorerRender(filepath, 0)
+
+    " dir_data = {
+    "   '<full path name>' : {
+    "       'name' : "<name>/",
+    "       'folded' : <0 folded, 1 unfolded>,
+    "       'files' : [<list of file names>],
+    "       'children' : [<list of children full path names>]
+    "   },
+    "   ...
     " }
 
     vertical resize 60
