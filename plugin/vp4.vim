@@ -810,12 +810,22 @@ function! s:PerforceExplore()
     let filepath = '"' . expand('%:h') . '/*"'
 
     let perforce_command = 'dirs ' . filepath
-    call s:PerforceRead(perforce_command)
+    let dirnames = split(s:PerforceSystem(perforce_command), '\n')
+    call map(dirnames, {idx, val -> split(val, '/')[-1] . '/'})
+    call append(line('$'), dirnames)
 
     let perforce_command = 'files -e ' . filepath
     let filenames = split(s:PerforceSystem(perforce_command), '\n')
-    call map(filenames, {idx, val -> split(val)[0]})
+    call map(filenames, {idx, val -> split(split(val)[0], '/')[-1]})
     call append(line('$'), filenames)
+
+    " d = {
+    " 'name' : "acds",
+    " 'folded' : 0,
+    " 'files' : ['foo#1', 'bar#2']
+    " }
+
+    vertical resize 60
 
     nnoremap <script> <silent> <buffer> <CR> :call <sid>ExplorerGoTo()<CR>
     nnoremap <script> <silent> <buffer> q    :quit<CR>
