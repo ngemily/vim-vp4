@@ -750,20 +750,19 @@ endfunction
 "   //main/foo.cpp#2    opens #2
 "   foo.cpp#2           opens #2
 "   foo.cpp             does nothing
-function! s:CheckServerPath()
+function! s:CheckServerPath(filename)
     " test for existence of depot file
-    let filename = expand('%')
-    if !s:PerforceExists(expand('%')) | return | endif
+    if !s:PerforceExists(a:filename) | return | endif
 
-    let requested_rev = matchstr(filename, '#[0-9]\+')
+    let requested_rev = matchstr(a:filename, '#[0-9]\+')
     let requested_rev = strpart(requested_rev, 1)
 
     " check for existence of local file
-    let have_rev = s:PerforceQuery('haveRev', filename)
+    let have_rev = s:PerforceQuery('haveRev', a:filename)
     if len(requested_rev) == 0 || have_rev == requested_rev
         let old_bufnr = bufnr('%')
         let old_bufname = bufname('%')
-        let client_file = s:PerforceQuery('clientFile', filename)
+        let client_file = s:PerforceQuery('clientFile', a:filename)
         execute 'edit ' . client_file
         let new_bufnr = bufnr('%')
         let new_bufname = bufname('%')
@@ -797,6 +796,28 @@ function! s:CheckServerPath()
 endfunction
 
 " }}}
+
+" {{{ Depot explorer
+function! s:ExplorerGoTo()
+    let filename = split(getline('.'))[0]
+    call s:CheckServerPath(filename)
+endfunction
+
+function! s:PerforceExplore()
+    silent leftabove vnew Depot
+    setlocal buftype=nofile
+
+    let filepath = '"' . expand('%:h') . '/*"'
+
+    let perforce_command = 'dirs ' . filepath
+    call s:PerforceRead(perforce_command)
+    let perforce_command = 'files -e ' . filepath
+    call s:PerforceRead(perforce_command)
+
+    nnoremap <script> <silent> <buffer> <CR> :call <sid>ExplorerGoTo()<CR>
+    nnoremap <script> <silent> <buffer> q    :quit<CR>
+endfunction
+" }}}
 " }}}
 
 " {{{ Auto-commands
@@ -813,7 +834,7 @@ augroup END
 augroup Vp4Enter
     autocmd!
     if g:vp4_allow_open_depot_file
-        autocmd VimEnter,BufReadCmd \(//\)\|\(#[0-9]\+\)  call <SID>CheckServerPath()
+        autocmd VimEnter,BufReadCmd \(//\)\|\(#[0-9]\+\)  call <SID>CheckServerPath(expand('%'))
     endif
 augroup END
 " }}}
@@ -832,6 +853,7 @@ command! -bang Vp4Shelve call <SID>PerforceShelve(<bang>0)
 command! Vp4Describe call <SID>PerforceDescribe()
 command! -nargs=+ Vp4 call <SID>PerforceSystemWr(<f-args>)
 command! Vp4Info call <SID>PerforceSystemWr('fstat ' . expand('%'))
+command! Vp4Explore call <SID>PerforceExplore()
 " }}}
 
 " vim: foldenable foldmethod=marker

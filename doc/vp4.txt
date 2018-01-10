@@ -27,27 +27,30 @@ vp4 does the following:
 ==============================================================================
 COMMANDS                                                        *vp4-commands*
 
-ANALYSIS - These commands query and display information about a file.
+ANALYSIS - Query and display information about a file.
 
     Annotate.|Vp4Annotate|
     Diff.....|Vp4Diff|
     Info.....|Vp4Info|
     Filelog..|Vp4Filelog|
 
-CHANGE SPECIFICATION - These commands perform actions on changelists.
+CHANGE SPECIFICATION - Perform actions on changelists.
 
     Change...|Vp4Change|
     Describe.|Vp4Describe|
     Shelve...|Vp4Shelve|
 
-FILE EDITING - These commands perform actions on files that alter their state
-        in Perforce.
+FILE EDITING - Perform actions on files that alter their state in Perforce.
 
     Add......|Vp4Add|
     Delete...|Vp4Delete|
     Edit.....|Vp4Edit|
     Reopen...|Vp4Reopen|
     Revert...|Vp4Revert|
+
+FILE EXPLORATION - Explore the depot
+
+    Explore..|Vp4Explore|
 
 ------------------------------------------------------------------------------
 ANALYSIS
@@ -143,6 +146,13 @@ and prompts for a selection.
 Reverts current file.  Confirms before doing so.  Use [!] to skip
 confirmation.
 
+------------------------------------------------------------------------------
+EXPLORATION
+                                                                  *Vp4Explore*
+Opens a view of the depot directory of the current file.  Use the enter key
+<CR> to go to that file if it is synced, or view a preview of that file
+otherwise.  Use <q> to quit.
+------------------------------------------------------------------------------
 ------------------------------------------------------------------------------
 SYSTEM
                                                                          *Vp4*
