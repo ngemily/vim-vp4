@@ -878,32 +878,37 @@ endfunction
 
 " Populate directory data at given node
 function! s:ExplorerPopulate(filepath)
-    let pattern = '"' . a:filepath . '*"'
+    if !has_key(s:directory_data, a:filepath)
+        let s:directory_data[a:filepath] = {
+                    \'name' : split(a:filepath, '/')[-1] . '/',
+                    \'folded' : 0,
+                    \}
+    endif
 
-    " Populate directories
-    let perforce_command = 'dirs ' . pattern
-    let dirnames = split(s:PerforceSystem(perforce_command), '\n')
-    call map(dirnames, {idx, val -> val . '/'})
-    for dirname in dirnames
-        if !has_key(s:directory_data, dirname)
-            let s:directory_data[dirname] = {
-                        \'name' : split(dirname, '/')[-1] . '/',
-                        \'folded' : 1
-                        \}
-        endif
-    endfor
+    if !has_key(s:directory_data[a:filepath], 'files')
+        let pattern = '"' . a:filepath . '*"'
 
-    " Populate files
-    let perforce_command = 'files -e ' . pattern
-    let filenames = split(s:PerforceSystem(perforce_command), '\n')
-    call map(filenames, {idx, val -> split(split(val)[0], '/')[-1]})
+        " Populate directories
+        let perforce_command = 'dirs ' . pattern
+        let dirnames = split(s:PerforceSystem(perforce_command), '\n')
+        call map(dirnames, {idx, val -> val . '/'})
+        for dirname in dirnames
+            if !has_key(s:directory_data, dirname)
+                let s:directory_data[dirname] = {
+                            \'name' : split(dirname, '/')[-1] . '/',
+                            \'folded' : 1
+                            \}
+            endif
+        endfor
 
-    let s:directory_data[a:filepath] = {
-                \'name' : split(a:filepath, '/')[-1] . '/',
-                \'children' : dirnames,
-                \'folded' : 0,
-                \'files' : filenames
-                \}
+        " Populate files
+        let perforce_command = 'files -e ' . pattern
+        let filenames = split(s:PerforceSystem(perforce_command), '\n')
+        call map(filenames, {idx, val -> split(split(val)[0], '/')[-1]})
+
+        let s:directory_data[a:filepath]['children'] = dirnames
+        let s:directory_data[a:filepath]['files'] = filenames
+    endif
 
 endfunction
 
