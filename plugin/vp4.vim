@@ -833,7 +833,7 @@ function! s:ExplorerGoTo()
         " toggle fold/unfold
         let d.folded = !d.folded
         let saved_curpos = getcurpos()
-        call s:ExplorerRender(s:explorer_key, 0, s:explorer_root)
+        call s:ExplorerRender(g:explorer_key)
         call setpos('.', saved_curpos)
     else
         " file
@@ -849,40 +849,46 @@ function! s:FilepathHead(filepath)
 endfunction
 
 function! s:ExplorerPop()
-    call s:ExplorerPopulate(s:explorer_root)
-    let root = s:FilepathHead(s:explorer_root)
-    call s:ExplorerRender(s:explorer_root, 0, root)
-    let s:explorer_key = s:explorer_root
-    let s:explorer_root = root
+    call s:ExplorerPopulate(s:FilepathHead(g:explorer_key))
+    call s:ExplorerRender(s:FilepathHead(g:explorer_key))
 endfunction
 
 " Render the directory data as a tree, using `a:key` as the root
-function! s:ExplorerRender(key, level, root)
+function! s:ExplorerRender(key, ...)
+    " default
+    let level = 0
+    let root  = s:FilepathHead(a:key)
+
+    if a:0 > 0
+        let level = a:1
+        let root  = a:2
+    endif
     " Clear screen before rendering
-    if a:level == 0
+    if level == 0
+        let g:explorer_key = a:key
         silent normal! ggdG
     endif
 
     " Setup
     let d = get(s:directory_data, a:key)
-    let prefix = repeat(' ', a:level * 4)
+    let prefix = repeat(' ', level * 4)
 
     " Print myself
     call append(line('$'), prefix . d.name)
-    let s:line_map[line("$")] = a:root
+    let s:line_map[line("$")] = root
 
     " Print my children
     if !d.folded
         " print directories
         for child in get(d, 'children', [])
-            call s:ExplorerRender(child, a:level + 1, a:root . d.name)
+            call s:ExplorerRender(child, level + 1, root . d.name)
         endfor
 
         " print files
         let prefix .= repeat(' ', 4)
         for filename in get(d, 'files', [])
             call append(line('$'), prefix . filename)
-            let s:line_map[line("$")] = a:root
+            let s:line_map[line("$")] = root
         endfor
     endif
 
@@ -935,10 +941,8 @@ function! s:PerforceExplore()
     setlocal buftype=nofile
     vertical resize 60
 
-    let s:explorer_key = perforce_filepath
-    let s:explorer_root = root
     call s:ExplorerPopulate(perforce_filepath)
-    call s:ExplorerRender(perforce_filepath, 0, root)
+    call s:ExplorerRender(perforce_filepath)
 
     " dir_data = {
     "   '<full path name>' : {
