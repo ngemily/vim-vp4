@@ -5,10 +5,13 @@
 
 " {{{ Initialization
 if exists('g:loaded_vp4') || !executable('p4') || &cp
-    finish
+    if !g:perforce_debug
+        finish
+    endif
 endif
 let g:loaded_vp4 = 1
 let s:directory_data = {}
+let s:line_map = {}
 
 function! vp4#sid()
     return maparg('<SID>', 'n')
@@ -76,7 +79,7 @@ endfunction
 " {{{ Perforce system functions
 " Return result of calling p4 command
 function! s:PerforceSystem(cmd)
-    let command = g:vp4_perforce_executable . " " . a:cmd
+    let command = g:vp4_perforce_executable . " " . a:cmd . " 2> /dev/null"
     if g:perforce_debug
         echom "DBG sys: " . command
     endif
@@ -799,43 +802,66 @@ endfunction
 " }}}
 
 " {{{ Depot explorer
+
+" If on a directory, toggle the directory.
+" If on a file, go to that file.
 function! s:ExplorerGoTo()
     let filename = split(getline('.'))[0]
     if strpart(filename, strlen(filename) - 1, 1) == '/'
         " toggle fold/unfold
-        echom 'dir'
+        let fullpath = s:line_map[line(".")] . filename
+        let d = get(s:directory_data, fullpath)
+        if !has_key(d, 'files')
+            call s:ExplorerPopulate(fullpath)
+        endif
+        let d.folded = !d.folded
+        call s:ExplorerRender(s:explorer_key, 0, s:explorer_root)
     else
         call s:CheckServerPath(filename)
     endif
 endfunction
 
 " Render the directory data as a tree, using `a:key` as the root
-function! s:ExplorerRender(key, level)
+function! s:ExplorerRender(key, level, root)
+    " Clear screen before rendering
+    if a:level == 0
+        silent normal! ggdG
+    endif
+
+    " Setup
     let d = get(s:directory_data, a:key)
     let prefix = repeat(' ', a:level * 4)
+
+    " Print myself
     call append(line('$'), prefix . d.name)
+    let s:line_map[line("$")] = a:root
+
+    " Print my children
     if !d.folded
-        " print children
+        " print directories
         for child in get(d, 'children', [])
-            call s:ExplorerRender(child, a:level + 1)
+            call s:ExplorerRender(child, a:level + 1, a:root . d.name)
         endfor
+
         " print files
         let prefix .= repeat(' ', 4)
         for filename in get(d, 'files', [])
-            call append(line('$'), prefix .filename)
+            call append(line('$'), prefix . filename)
+            let s:line_map[line("$")] = a:root
         endfor
     endif
+
 endfunction
 
-function! s:PerforceExplore()
-    silent leftabove vnew Depot
-    setlocal buftype=nofile
+" Populate directory data at given node
+function! s:ExplorerPopulate(filepath)
 
-    let filepath = expand('%:p:h')
-    let pattern = '"' . filepath . '/*"'
+    let pattern = '"' . a:filepath . '*"'
 
+    " Populate directories
     let perforce_command = 'dirs ' . pattern
     let dirnames = split(s:PerforceSystem(perforce_command), '\n')
+    call map(dirnames, {idx, val -> val . '/'})
     for dirname in dirnames
         let s:directory_data[dirname] = {
                     \'name' : split(dirname, '/')[-1] . '/',
@@ -843,18 +869,39 @@ function! s:PerforceExplore()
                     \}
     endfor
 
+    " Populate files
     let perforce_command = 'files -e ' . pattern
     let filenames = split(s:PerforceSystem(perforce_command), '\n')
     call map(filenames, {idx, val -> split(split(val)[0], '/')[-1]})
 
-    let s:directory_data[filepath] = {
-                \'name' : split(filepath, '/')[-1] . '/',
+    let s:directory_data[a:filepath] = {
+                \'name' : split(a:filepath, '/')[-1] . '/',
                 \'children' : dirnames,
                 \'folded' : 0,
                 \'files' : filenames
                 \}
 
-    call s:ExplorerRender(filepath, 0)
+endfunction
+
+" Open the depot file explorer
+function! s:PerforceExplore()
+    let perforce_filename = s:PerforceQuery('depotFile', expand('%:p'))
+    let path = split(perforce_filename, '/')
+    call remove(path, -1)
+    let perforce_filepath = '//' . join(path, '/') . '/'
+    let path = split(perforce_filepath, '/')
+    call remove(path, -1)
+    let root = '//' . join(path, '/') . '/'
+
+    " buffer setup
+    silent leftabove vnew Depot
+    setlocal buftype=nofile
+    vertical resize 60
+
+    let s:explorer_key = perforce_filepath
+    let s:explorer_root = root
+    call s:ExplorerPopulate(perforce_filepath)
+    call s:ExplorerRender(perforce_filepath, 0, root)
 
     " dir_data = {
     "   '<full path name>' : {
@@ -866,8 +913,7 @@ function! s:PerforceExplore()
     "   ...
     " }
 
-    vertical resize 60
-
+    " mappings
     nnoremap <script> <silent> <buffer> <CR> :call <sid>ExplorerGoTo()<CR>
     nnoremap <script> <silent> <buffer> q    :quit<CR>
 endfunction
