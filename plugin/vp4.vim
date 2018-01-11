@@ -803,6 +803,17 @@ endfunction
 
 " {{{ Depot explorer
 
+" Change explorer root to selected directory
+function! s:ExplorerChange()
+    let filename = split(getline('.'))[0]
+    if strpart(filename, strlen(filename) - 1, 1) != '/' | return | endif
+
+    let fullpath = s:line_map[line(".")] . filename
+    let s:directory_data[fullpath]['folded'] = 0
+    call s:ExplorerPopulate(fullpath)
+    call s:ExplorerRender(fullpath, 0, s:FilepathHead(fullpath))
+endfunction
+
 " If on a directory, toggle the directory.
 " If on a file, go to that file.
 function! s:ExplorerGoTo()
@@ -920,7 +931,6 @@ function! s:PerforceExplore()
     " buffer setup
     silent leftabove vnew Depot
     setlocal buftype=nofile
-    setlocal nomodifiable
     vertical resize 60
 
     let s:explorer_key = perforce_filepath
@@ -948,6 +958,7 @@ function! s:PerforceExplore()
     " mappings
     nnoremap <script> <silent> <buffer> <CR> :call <sid>ExplorerGoTo()<CR>
     nnoremap <script> <silent> <buffer> -    :call <sid>ExplorerPop()<CR>
+    nnoremap <script> <silent> <buffer> C    :call <sid>ExplorerChange()<CR>
     nnoremap <script> <silent> <buffer> q    :quit<CR>
 
     " syntax
