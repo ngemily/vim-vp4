@@ -878,7 +878,6 @@ endfunction
 
 " Populate directory data at given node
 function! s:ExplorerPopulate(filepath)
-
     let pattern = '"' . a:filepath . '*"'
 
     " Populate directories
@@ -886,10 +885,12 @@ function! s:ExplorerPopulate(filepath)
     let dirnames = split(s:PerforceSystem(perforce_command), '\n')
     call map(dirnames, {idx, val -> val . '/'})
     for dirname in dirnames
-        let s:directory_data[dirname] = {
-                    \'name' : split(dirname, '/')[-1] . '/',
-                    \'folded' : 1
-                    \}
+        if !has_key(s:directory_data, dirname)
+            let s:directory_data[dirname] = {
+                        \'name' : split(dirname, '/')[-1] . '/',
+                        \'folded' : 1
+                        \}
+        endif
     endfor
 
     " Populate files
