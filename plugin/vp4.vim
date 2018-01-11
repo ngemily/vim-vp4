@@ -828,6 +828,20 @@ function! s:ExplorerGoTo()
     endif
 endfunction
 
+" Return head of a:filepath
+function! s:FilepathHead(filepath)
+    let path = split(a:filepath, '/')
+    call remove(path, -1)
+    return '//' . join(path, '/') . '/'
+endfunction
+
+function! s:ExplorerPop()
+    call s:ExplorerPopulate(s:explorer_root)
+    let root = s:FilepathHead(s:explorer_root)
+    call s:ExplorerRender(s:explorer_root, 0, root)
+    let s:explorer_root = root
+endfunction
+
 " Render the directory data as a tree, using `a:key` as the root
 function! s:ExplorerRender(key, level, root)
     " Clear screen before rendering
@@ -840,8 +854,9 @@ function! s:ExplorerRender(key, level, root)
     let prefix = repeat(' ', a:level * 4)
 
     " Print myself
-    call append(line('$'), prefix . d.name)
     let s:line_map[line("$")] = a:root
+    " call append(line('$'), prefix . s:line_map[line("$")] . d.name)
+    call append(line('$'), prefix . d.name)
 
     " Print my children
     if !d.folded
@@ -853,8 +868,9 @@ function! s:ExplorerRender(key, level, root)
         " print files
         let prefix .= repeat(' ', 4)
         for filename in get(d, 'files', [])
-            call append(line('$'), prefix . filename)
             let s:line_map[line("$")] = a:root
+            " call append(line('$'), prefix . s:line_map[line("$")] . filename)
+            call append(line('$'), prefix . filename)
         endfor
     endif
 
@@ -893,12 +909,8 @@ endfunction
 " Open the depot file explorer
 function! s:PerforceExplore()
     let perforce_filename = s:PerforceQuery('depotFile', expand('%:p'))
-    let path = split(perforce_filename, '/')
-    call remove(path, -1)
-    let perforce_filepath = '//' . join(path, '/') . '/'
-    let path = split(perforce_filepath, '/')
-    call remove(path, -1)
-    let root = '//' . join(path, '/') . '/'
+    let perforce_filepath = s:FilepathHead(perforce_filename)
+    let root = s:FilepathHead(perforce_filepath)
 
     " buffer setup
     silent leftabove vnew Depot
@@ -919,13 +931,18 @@ function! s:PerforceExplore()
     "   },
     "   ...
     " }
+    "
+    " root = //main
+    " parent/               //main
+    "     child/            //main/parent
+    "         file0.txt     //main/parent/child
+    "         file1.txt     //main/parent/child
+    "     file2.txt         //main/parent
 
     " mappings
     nnoremap <script> <silent> <buffer> <CR> :call <sid>ExplorerGoTo()<CR>
+    nnoremap <script> <silent> <buffer> -    :call <sid>ExplorerPop()<CR>
     nnoremap <script> <silent> <buffer> q    :quit<CR>
-
-    " file#1
-    " dir/
 
     " syntax
     syn match Vp4Dir /\v.*\//
