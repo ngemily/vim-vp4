@@ -812,6 +812,8 @@ function! s:ExplorerChange()
     let s:directory_data[fullpath]['folded'] = 0
     call s:ExplorerPopulate(fullpath)
     call s:ExplorerRender(fullpath, 0, s:FilepathHead(fullpath))
+
+    call setpos(".", [0, 2, 0, 0])
 endfunction
 
 " If on a directory, toggle the directory.
