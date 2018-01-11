@@ -854,9 +854,8 @@ function! s:ExplorerRender(key, level, root)
     let prefix = repeat(' ', a:level * 4)
 
     " Print myself
-    let s:line_map[line("$")] = a:root
-    " call append(line('$'), prefix . s:line_map[line("$")] . d.name)
     call append(line('$'), prefix . d.name)
+    let s:line_map[line("$")] = a:root
 
     " Print my children
     if !d.folded
@@ -868,9 +867,8 @@ function! s:ExplorerRender(key, level, root)
         " print files
         let prefix .= repeat(' ', 4)
         for filename in get(d, 'files', [])
-            let s:line_map[line("$")] = a:root
-            " call append(line('$'), prefix . s:line_map[line("$")] . filename)
             call append(line('$'), prefix . filename)
+            let s:line_map[line("$")] = a:root
         endfor
     endif
 
