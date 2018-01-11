@@ -916,6 +916,16 @@ function! s:PerforceExplore()
     " mappings
     nnoremap <script> <silent> <buffer> <CR> :call <sid>ExplorerGoTo()<CR>
     nnoremap <script> <silent> <buffer> q    :quit<CR>
+
+    " file#1
+    " dir/
+
+    " syntax
+    syn match Vp4Dir /\v.*\//
+    syn match Vp4Rev /\v#.*/
+
+    hi def link Vp4Dir Identifier
+    hi def link Vp4Rev Comment
 endfunction
 " }}}
 " }}}
