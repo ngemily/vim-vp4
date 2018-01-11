@@ -839,6 +839,7 @@ function! s:ExplorerPop()
     call s:ExplorerPopulate(s:explorer_root)
     let root = s:FilepathHead(s:explorer_root)
     call s:ExplorerRender(s:explorer_root, 0, root)
+    let s:explorer_key = s:explorer_root
     let s:explorer_root = root
 endfunction
 
