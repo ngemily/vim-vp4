@@ -808,15 +808,22 @@ endfunction
 function! s:ExplorerGoTo()
     let filename = split(getline('.'))[0]
     if strpart(filename, strlen(filename) - 1, 1) == '/'
-        " toggle fold/unfold
+        " directory
         let fullpath = s:line_map[line(".")] . filename
+
+        " populate if not populated
         let d = get(s:directory_data, fullpath)
         if !has_key(d, 'files')
             call s:ExplorerPopulate(fullpath)
         endif
+
+        " toggle fold/unfold
         let d.folded = !d.folded
+        let saved_curpos = getcurpos()
         call s:ExplorerRender(s:explorer_key, 0, s:explorer_root)
+        call setpos('.', saved_curpos)
     else
+        " file
         call s:CheckServerPath(filename)
     endif
 endfunction
