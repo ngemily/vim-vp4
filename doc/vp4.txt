@@ -149,9 +149,19 @@ confirmation.
 ------------------------------------------------------------------------------
 EXPLORATION
                                                                   *Vp4Explore*
-Opens a view of the depot directory of the current file.  Use the enter key
-<CR> to go to that file if it is synced, or view a preview of that file
-otherwise.  Use <q> to quit.
+Opens depot file explorer at the current filepath.
+
+Key mappings:
+
+             +======+===========================================+
+             | Key  | function                                  |
+             +------+-------------------------------------------+
+             | <CR> | Expand/collapse directory; go to file     |
+             | -    | Explore parent node                       |
+             | c    | Change root of explorer to this directory |
+             | q    | Quit                                      |
+             +======+===========================================+
+
 ------------------------------------------------------------------------------
 ------------------------------------------------------------------------------
 SYSTEM
