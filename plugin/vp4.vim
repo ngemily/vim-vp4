@@ -920,6 +920,7 @@ function! s:PerforceExplore()
     " buffer setup
     silent leftabove vnew Depot
     setlocal buftype=nofile
+    setlocal nomodifiable
     vertical resize 60
 
     let s:explorer_key = perforce_filepath
