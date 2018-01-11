@@ -853,11 +853,17 @@ function! s:ExplorerPop()
     call s:ExplorerRender(s:FilepathHead(g:explorer_key))
 endfunction
 
-" Render the directory data as a tree, using `a:key` as the root
+" Render the directory data as a tree, using given node as the root.  This node
+" should be a directory.
 function! s:ExplorerRender(key, ...)
+    let key = a:key
+    if strpart(a:key, strlen(a:key) - 1, 1) != '/'
+        let key .= '/'
+    endif
+
     " default
     let level = 0
-    let root  = s:FilepathHead(a:key)
+    let root  = s:FilepathHead(key)
 
     if a:0 > 0
         let level = a:1
@@ -865,12 +871,12 @@ function! s:ExplorerRender(key, ...)
     endif
     " Clear screen before rendering
     if level == 0
-        let g:explorer_key = a:key
+        let g:explorer_key = key
         silent normal! ggdG
     endif
 
     " Setup
-    let d = get(s:directory_data, a:key)
+    let d = get(s:directory_data, key)
     let prefix = repeat(' ', level * 4)
 
     " Print myself
@@ -896,15 +902,22 @@ endfunction
 
 " Populate directory data at given node
 function! s:ExplorerPopulate(filepath)
-    if !has_key(s:directory_data, a:filepath)
-        let s:directory_data[a:filepath] = {
-                    \'name' : split(a:filepath, '/')[-1] . '/',
+    let perforce_filepath = a:filepath
+    if strpart(a:filepath, strlen(a:filepath) - 1, 1) != '/'
+        let perforce_filepath .= '/'
+    endif
+    if g:perforce_debug
+        echom 'Populating "' . perforce_filepath . '" ...'
+    endif
+    if !has_key(s:directory_data, perforce_filepath)
+        let s:directory_data[perforce_filepath] = {
+                    \'name' : split(perforce_filepath, '/')[-1] . '/',
                     \'folded' : 0,
                     \}
     endif
 
-    if !has_key(s:directory_data[a:filepath], 'files')
-        let pattern = '"' . a:filepath . '*"'
+    if !has_key(s:directory_data[perforce_filepath], 'files')
+        let pattern = '"' . perforce_filepath . '*"'
 
         " Populate directories
         let perforce_command = 'dirs ' . pattern
@@ -924,17 +937,22 @@ function! s:ExplorerPopulate(filepath)
         let filenames = split(s:PerforceSystem(perforce_command), '\n')
         call map(filenames, {idx, val -> split(split(val)[0], '/')[-1]})
 
-        let s:directory_data[a:filepath]['children'] = dirnames
-        let s:directory_data[a:filepath]['files'] = filenames
+        let s:directory_data[perforce_filepath]['children'] = dirnames
+        let s:directory_data[perforce_filepath]['files'] = filenames
     endif
 
 endfunction
 
 " Open the depot file explorer
-function! s:PerforceExplore()
-    let perforce_filename = s:PerforceQuery('depotFile', expand('%:p'))
-    let perforce_filepath = s:FilepathHead(perforce_filename)
-    let root = s:FilepathHead(perforce_filepath)
+" :Vp4Explore()              - opens at current directory
+" :Vp4Explore('//acds/main') - opens at '//acds/main'
+function! s:PerforceExplore(...)
+    if a:0 > 0
+        let perforce_filepath = a:1
+    else
+        let command = 'where ' . getcwd(".")
+        let perforce_filepath = split(s:PerforceSystem(command))[0]
+    endif
 
     " buffer setup
     silent leftabove vnew Depot
@@ -964,7 +982,7 @@ function! s:PerforceExplore()
     " mappings
     nnoremap <script> <silent> <buffer> <CR> :call <sid>ExplorerGoTo()<CR>
     nnoremap <script> <silent> <buffer> -    :call <sid>ExplorerPop()<CR>
-    nnoremap <script> <silent> <buffer> C    :call <sid>ExplorerChange()<CR>
+    nnoremap <script> <silent> <buffer> c    :call <sid>ExplorerChange()<CR>
     nnoremap <script> <silent> <buffer> q    :quit<CR>
 
     " syntax
@@ -1010,7 +1028,7 @@ command! -bang Vp4Shelve call <SID>PerforceShelve(<bang>0)
 command! Vp4Describe call <SID>PerforceDescribe()
 command! -nargs=+ Vp4 call <SID>PerforceSystemWr(<f-args>)
 command! Vp4Info call <SID>PerforceSystemWr('fstat ' . expand('%'))
-command! Vp4Explore call <SID>PerforceExplore()
+command! -nargs=? Vp4Explore call <SID>PerforceExplore(<f-args>)
 " }}}
 
 " vim: foldenable foldmethod=marker
