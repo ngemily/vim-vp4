@@ -849,8 +849,10 @@ function! s:FilepathHead(filepath)
 endfunction
 
 function! s:ExplorerPop()
-    call s:ExplorerPopulate(s:FilepathHead(g:explorer_key))
-    call s:ExplorerRender(s:FilepathHead(g:explorer_key))
+    let path = s:FilepathHead(g:explorer_key)
+    if len(split(path, '/')) == 0 | return | endif
+    call s:ExplorerPopulate(path)
+    call s:ExplorerRender(path)
 endfunction
 
 " Render the directory data as a tree, using given node as the root.  This node
