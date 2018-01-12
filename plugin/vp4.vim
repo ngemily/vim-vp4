@@ -924,7 +924,7 @@ function! s:ExplorerPopulate(filepath)
         " Populate directories
         let perforce_command = 'dirs ' . pattern
         let dirnames = split(s:PerforceSystem(perforce_command), '\n')
-        call map(dirnames, {idx, val -> val . '/'})
+        call map(dirnames, 'v:val . "/"')
         for dirname in dirnames
             if !has_key(s:directory_data, dirname)
                 let s:directory_data[dirname] = {
@@ -936,8 +936,14 @@ function! s:ExplorerPopulate(filepath)
 
         " Populate files
         let perforce_command = 'files -e ' . pattern
-        let filenames = split(s:PerforceSystem(perforce_command), '\n')
-        call map(filenames, {idx, val -> split(split(val)[0], '/')[-1]})
+        let filepaths = split(s:PerforceSystem(perforce_command), '\n')
+        let filenames = []
+        for filepath in filepaths
+            let filename = split(split(filepath)[0], '/')[-1]
+            call add(filenames, filename)
+        endfor
+        " Neovim does not support calling map with function objects
+        " call map(filepaths, {idx, val -> split(split(val)[0], '/')[-1]})
 
         let s:directory_data[perforce_filepath]['children'] = dirnames
         let s:directory_data[perforce_filepath]['files'] = filenames
@@ -953,7 +959,12 @@ function! s:PerforceExplore(...)
         let perforce_filepath = a:1
     else
         let command = 'where ' . getcwd(".")
-        let perforce_filepath = split(s:PerforceSystem(command))[0]
+        let retval = s:PerforceSystem(command)
+        if v:shell_error
+            call s:EchoWarning("Unable to resolve a Perforce directory.")
+            return
+        endif
+        let perforce_filepath = split(retval)[0]
     endif
 
     " buffer setup
