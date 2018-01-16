@@ -892,7 +892,7 @@ function! s:ExplorerRender(key, ...)
         " print files
         let prefix .= repeat(' ', 4)
         for file_obj in get(d, 'files')
-            call append(line('$'), prefix . file_obj['name'])
+            call append(line('$'), prefix . file_obj['name'] . file_obj['flags'])
             let s:line_map[line("$")] = root . d.name
         endfor
     endif
@@ -943,9 +943,15 @@ function! s:ExplorerPopulate(filepath)
         let filenames = []
         for filepath in filepaths
             let filename = split(split(filepath)[0], '/')[-1]
+            let local_path = s:directory_map[perforce_filepath] . s:PerforceStripRevision(filename)
+            if filereadable(local_path)
+                let flags = "*"
+            else
+                let flags = ""
+            endif
             let obj = {
                         \'name' : filename,
-                        \'flags' : "",
+                        \'flags' : flags,
                         \}
             call add(filenames, obj)
         endfor
