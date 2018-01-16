@@ -781,9 +781,9 @@ endfunction
 " If on a file, go to that file.
 function! s:ExplorerGoTo()
     let filename = split(getline('.'))[0]
+    let fullpath = s:line_map[line(".")] . filename
     if strpart(filename, strlen(filename) - 1, 1) == '/'
         " directory
-        let fullpath = s:line_map[line(".")] . filename
 
         " populate if not populated
         let d = get(s:directory_data, fullpath)
@@ -798,7 +798,7 @@ function! s:ExplorerGoTo()
         call setpos('.', saved_curpos)
     else
         " file
-        call vp4#CheckServerPath(filename)
+        call vp4#CheckServerPath(fullpath)
     endif
 endfunction
 
@@ -857,7 +857,7 @@ function! s:ExplorerRender(key, ...)
         let prefix .= repeat(' ', 4)
         for filename in get(d, 'files', [])
             call append(line('$'), prefix . filename)
-            let s:line_map[line("$")] = root
+            let s:line_map[line("$")] = root . d.name
         endfor
     endif
 
@@ -878,6 +878,7 @@ function! s:ExplorerPopulate(filepath)
                     \'folded' : 0,
                     \}
     endif
+    let s:directory_data[perforce_filepath]['folded'] = 0
 
     if !has_key(s:directory_data[perforce_filepath], 'files')
         let pattern = '"' . perforce_filepath . '*"'
