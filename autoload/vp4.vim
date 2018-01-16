@@ -952,20 +952,26 @@ function! s:ExplorerPopulate(filepath)
 endfunction
 
 " Open the depot file explorer
-" :Vp4Explore()              - opens at current directory
-" :Vp4Explore('//acds/main') - opens at '//acds/main'
+" :Vp4Explore()               - opens at current file's directory
+" :Vp4Explore('.')            - opens at cwd
+" :Vp4Explore('//depot/path') - opens at '//depot/path'
+" :Vp4Explore('/local/path')  - opens at 'local/path'
 function! vp4#PerforceExplore(...)
+    let command = 'where '
     if a:0 > 0
-        let perforce_filepath = a:1
+        let command .= a:1
     else
-        let command = 'where ' . expand('%:p:h')
-        let retval = s:PerforceSystem(command)
-        if v:shell_error
-            call s:EchoWarning("Unable to resolve a Perforce directory.")
-            return
-        endif
-        let perforce_filepath = split(retval)[0]
+        " use directory of current file
+        let command .= expand('%:p:h')
     endif
+
+    " `p4 where` only works on directories below the root
+    let retval = s:PerforceSystem(command)
+    if v:shell_error || strlen(retval) == 0
+        call s:EchoWarning("Unable to resolve a Perforce directory.")
+        return
+    endif
+    let perforce_filepath = split(retval)[0]
 
     " buffer setup
     silent leftabove vnew Depot
