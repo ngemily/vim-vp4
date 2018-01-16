@@ -3,8 +3,33 @@
 " Last Change:  Nov 22, 2016
 " Author:       Emily Ng
 
+" {{{ Explorer global data structures
+" directory object data
+" dir_data = {
+"   '<full path name>' : {
+"       'name' : "<name>/",
+"       'folded' : <0 folded, 1 unfolded>,
+"       'files' : [<list of file names>],
+"       'children' : [<list of children full path names>]
+"   },
+"   ...
+" }
+"
+" root = //main
+" parent/               //main
+"     child/            //main/parent
+"         file0.txt     //main/parent/child
+"         file1.txt     //main/parent/child
+"     file2.txt         //main/parent
 let s:directory_data = {}
+
+" line number to directory prefix map
 let s:line_map = {}
+
+" depot directory to local directory map
+let s:directory_map = {}
+" }}}
+
 " {{{ Helper functions
 
 " {{{ Generic Helper functions
@@ -749,11 +774,11 @@ function! vp4#CheckServerPath(filename)
     if g:vp4_print_suppress_header
         let perforce_command .= ' -q '
     endif
-    let perforce_command .= shellescape(filename, 1)
+    let perforce_command .= shellescape(a:filename, 1)
     call s:PerforceRead(perforce_command)
 
     " get filetype
-    execute 'doauto BufRead ' . substitute(filename, '#.*', '', '')
+    execute 'doauto BufRead ' . substitute(a:filename, '#.*', '', '')
 
     setlocal buftype=nofile
     setlocal nomodifiable
@@ -781,7 +806,8 @@ endfunction
 " If on a file, go to that file.
 function! s:ExplorerGoTo()
     let filename = split(getline('.'))[0]
-    let fullpath = s:line_map[line(".")] . filename
+    let directory = s:line_map[line(".")]
+    let fullpath = directory . filename
     if strpart(filename, strlen(filename) - 1, 1) == '/'
         " directory
 
@@ -798,7 +824,13 @@ function! s:ExplorerGoTo()
         call setpos('.', saved_curpos)
     else
         " file
-        call vp4#CheckServerPath(fullpath)
+        let local_path = s:directory_map[directory] . s:PerforceStripRevision(filename)
+        if filereadable(local_path)
+            let command  = 'edit ' . local_path
+            exe command
+        else
+            call vp4#CheckServerPath(fullpath)
+        endif
     endif
 endfunction
 
@@ -819,6 +851,7 @@ endfunction
 " Render the directory data as a tree, using given node as the root.  This node
 " should be a directory.
 function! s:ExplorerRender(key, ...)
+    setlocal modifiable
     let key = a:key
     if strpart(a:key, strlen(a:key) - 1, 1) != '/'
         let key .= '/'
@@ -878,6 +911,11 @@ function! s:ExplorerPopulate(filepath)
                     \'folded' : 0,
                     \}
     endif
+    if !has_key(s:directory_map, perforce_filepath)
+        let command = 'where ' . strpart(perforce_filepath, 0, strlen(perforce_filepath) - 1)
+        let local_path = split(s:PerforceSystem(command))[-1]
+        let s:directory_map[perforce_filepath] = local_path . '/'
+    endif
     let s:directory_data[perforce_filepath]['folded'] = 0
 
     if !has_key(s:directory_data[perforce_filepath], 'files')
@@ -936,23 +974,6 @@ function! vp4#PerforceExplore(...)
 
     call s:ExplorerPopulate(perforce_filepath)
     call s:ExplorerRender(perforce_filepath)
-
-    " dir_data = {
-    "   '<full path name>' : {
-    "       'name' : "<name>/",
-    "       'folded' : <0 folded, 1 unfolded>,
-    "       'files' : [<list of file names>],
-    "       'children' : [<list of children full path names>]
-    "   },
-    "   ...
-    " }
-    "
-    " root = //main
-    " parent/               //main
-    "     child/            //main/parent
-    "         file0.txt     //main/parent/child
-    "         file1.txt     //main/parent/child
-    "     file2.txt         //main/parent
 
     " mappings
     nnoremap <script> <silent> <buffer> <CR> :call <sid>ExplorerGoTo()<CR>
