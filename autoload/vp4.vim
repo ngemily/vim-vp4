@@ -915,6 +915,7 @@ function! s:ExplorerPopulate(filepath)
                     \}
     endif
     if !has_key(s:directory_map, perforce_filepath)
+        " FIXME fails for //acds/main, when popping directory stack
         let command = 'where ' . strpart(perforce_filepath, 0, strlen(perforce_filepath) - 1)
         let local_path = split(s:PerforceSystem(command))[-1]
         let s:directory_map[perforce_filepath] = local_path . '/'
