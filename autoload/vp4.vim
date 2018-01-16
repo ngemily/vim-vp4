@@ -958,7 +958,7 @@ function! vp4#PerforceExplore(...)
     if a:0 > 0
         let perforce_filepath = a:1
     else
-        let command = 'where ' . getcwd(".")
+        let command = 'where ' . expand('%:p:h')
         let retval = s:PerforceSystem(command)
         if v:shell_error
             call s:EchoWarning("Unable to resolve a Perforce directory.")
