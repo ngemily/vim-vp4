@@ -9,7 +9,9 @@
 "   '<full path name>' : {
 "       'name' : "<name>/",
 "       'folded' : <0 folded, 1 unfolded>,
-"       'files' : [<list of file names>],
+"       'files' : [
+"           {'name': <filename>, 'flags': <flags>}, ...
+"       ],
 "       'children' : [<list of children full path names>]
 "   },
 "   ...
@@ -888,8 +890,8 @@ function! s:ExplorerRender(key, ...)
 
         " print files
         let prefix .= repeat(' ', 4)
-        for filename in get(d, 'files', [])
-            call append(line('$'), prefix . filename)
+        for file_obj in get(d, 'files')
+            call append(line('$'), prefix . file_obj['name'])
             let s:line_map[line("$")] = root . d.name
         endfor
     endif
@@ -940,7 +942,11 @@ function! s:ExplorerPopulate(filepath)
         let filenames = []
         for filepath in filepaths
             let filename = split(split(filepath)[0], '/')[-1]
-            call add(filenames, filename)
+            let obj = {
+                        \'name' : filename,
+                        \'flags' : "",
+                        \}
+            call add(filenames, obj)
         endfor
         " Neovim does not support calling map with function objects
         " call map(filepaths, {idx, val -> split(split(val)[0], '/')[-1]})
