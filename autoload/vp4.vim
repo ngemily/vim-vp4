@@ -847,6 +847,7 @@ function! s:ExplorerPop()
     let path = s:FilepathHead(g:explorer_key)
     if len(split(path, '/')) == 0 | return | endif
     call s:ExplorerPopulate(path)
+    let s:directory_data[path]['folded'] = 0
     call s:ExplorerRender(path)
 endfunction
 
@@ -918,7 +919,6 @@ function! s:ExplorerPopulate(filepath)
         let local_path = split(s:PerforceSystem(command))[-1]
         let s:directory_map[perforce_filepath] = local_path . '/'
     endif
-    let s:directory_data[perforce_filepath]['folded'] = 0
 
     if !has_key(s:directory_data[perforce_filepath], 'files')
         let pattern = '"' . perforce_filepath . '*"'
