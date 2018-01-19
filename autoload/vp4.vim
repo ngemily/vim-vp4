@@ -826,6 +826,7 @@ function! s:ExplorerGoTo()
         call setpos('.', saved_curpos)
     else
         " file
+        rightbelow vnew
         let local_path = s:directory_map[directory] . s:PerforceStripRevision(filename)
         if filereadable(local_path)
             let command  = 'edit ' . local_path
