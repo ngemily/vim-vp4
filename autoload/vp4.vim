@@ -844,6 +844,7 @@ function! s:FilepathHead(filepath)
     return '//' . join(path, '/') . '/'
 endfunction
 
+" Set explorer root node to its parent
 function! s:ExplorerPop()
     let path = s:FilepathHead(g:explorer_key)
     if len(split(path, '/')) == 0 | return | endif
