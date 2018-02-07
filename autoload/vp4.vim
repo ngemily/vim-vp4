@@ -751,10 +751,10 @@ function! vp4#CheckServerPath(filename)
 
     " check for existence of local file
     let have_rev = s:PerforceQuery('haveRev', a:filename)
-    if len(requested_rev) == 0 || have_rev == requested_rev
+    let client_file = s:PerforceQuery('clientFile', a:filename)
+    if (len(requested_rev) == 0 || have_rev == requested_rev) && filereadable(client_file)
         let old_bufnr = bufnr('%')
         let old_bufname = bufname('%')
-        let client_file = s:PerforceQuery('clientFile', a:filename)
         execute 'edit ' . client_file
         let new_bufnr = bufnr('%')
         let new_bufname = bufname('%')
@@ -790,6 +790,36 @@ endfunction
 " }}}
 
 " {{{ Depot explorer
+
+" Sync node under cursor, non-recursive
+function! s:ExplorerSync()
+    let filename = split(getline('.'))[0]
+    let directory = s:line_map[line(".")]
+    let fullpath = directory . filename
+    if strpart(filename, strlen(filename) - 1, 1) == '/'
+        " directory
+
+        " populate if not populated
+        let d = get(s:directory_data, fullpath)
+        if !has_key(d, 'files')
+            call s:ExplorerPopulate(fullpath)
+        endif
+
+        " sync
+        if d.folded = 1
+            let d.folded = 0
+            let saved_curpos = getcurpos()
+            call s:ExplorerRender(g:explorer_key)
+            call setpos('.', saved_curpos)
+        endif
+        let command = 'sync ' . fullpath . '*'
+        call s:PerforceSystem(command)
+    else
+        " file
+        let command = 'sync ' . fullpath
+        call s:PerforceSystem(command)
+    endif
+endfunction
 
 " Change explorer root to selected directory
 function! s:ExplorerChange()
@@ -1000,6 +1030,7 @@ function! vp4#PerforceExplore(...)
     nnoremap <script> <silent> <buffer> <CR> :call <sid>ExplorerGoTo()<CR>
     nnoremap <script> <silent> <buffer> -    :call <sid>ExplorerPop()<CR>
     nnoremap <script> <silent> <buffer> c    :call <sid>ExplorerChange()<CR>
+    nnoremap <script> <silent> <buffer> s    :call <sid>ExplorerSync()<CR>
     nnoremap <script> <silent> <buffer> q    :quit<CR>
 
     " syntax
