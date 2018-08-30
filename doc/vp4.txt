@@ -193,11 +193,6 @@ OPTIONS                                                          *vp4-options*
                             = 0
                             = 1 (default)
 
-*g:vp4_prompt_on_modify*    Prompt for edit when modifying a file that has not
-                            already been opened for edit.
-                            = 0 (default)
-                            = 1
-
 *g:vp4_diff_suppress_header*
                             Suppress perforce header information in file
                             being diffed
