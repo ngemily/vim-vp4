@@ -29,7 +29,6 @@ endfunction
 
 call s:set('g:vp4_perforce_executable', 'p4')
 call s:set('g:vp4_prompt_on_write', 1)
-call s:set('g:vp4_prompt_on_modify', 0)
 call s:set('g:vp4_annotate_revision', 0)
 call s:set('g:vp4_open_loclist', 1)
 call s:set('g:vp4_filelog_max', 10)
@@ -48,9 +47,6 @@ augroup PromptOnWrite
     autocmd!
     if g:vp4_prompt_on_write
         autocmd BufWritePre * call vp4#PromptForOpen()
-    endif
-    if g:vp4_prompt_on_modify
-        autocmd FileChangedRO * call vp4#PromptForOpen()
     endif
 augroup END
 
