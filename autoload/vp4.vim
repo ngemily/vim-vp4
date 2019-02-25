@@ -791,38 +791,51 @@ endfunction
 
 " {{{ Depot explorer
 
-" Sync node under cursor, non-recursive
-function! s:ExplorerSync()
+" Print file contents to temporary buffer for viewing without syncing
+function! s:ExplorerPreviewOrOpen()
+    if len(getline('.')) == 0 | return | endif
+
     let filename = split(getline('.'))[0]
     let directory = s:line_map[line(".")]
     let fullpath = directory . filename
-    if strpart(filename, strlen(filename) - 1, 1) == '/'
-        " directory
+    let local_path = s:directory_map[directory] . s:PerforceStripRevision(filename)
 
-        " populate if not populated
-        let d = get(s:directory_data, fullpath)
-        if !has_key(d, 'files')
-            call s:ExplorerPopulate(fullpath)
-        endif
-
-        " sync
-        if d.folded = 1
-            let d.folded = 0
-            let saved_curpos = getcurpos()
-            call s:ExplorerRender(g:explorer_key)
-            call setpos('.', saved_curpos)
-        endif
-        let command = 'sync ' . fullpath . '*'
-        call s:PerforceSystem(command)
+    " file
+    rightbelow new
+    let local_path = s:directory_map[directory] . s:PerforceStripRevision(filename)
+    if filereadable(local_path)
+        let command  = 'edit ' . local_path
+        exe command
     else
-        " file
-        let command = 'sync ' . fullpath
+        call vp4#CheckServerPath(fullpath)
+    endif
+endfunction
+
+" Sync or open file under cursor, non-recursive
+function! s:ExplorerSyncOrOpen(split_command)
+    if len(getline('.')) == 0 | return | endif
+
+    let filename = split(getline('.'))[0]
+    let directory = s:line_map[line(".")]
+    let fullpath = directory . filename
+    let local_path = s:directory_map[directory] . s:PerforceStripRevision(filename)
+
+    " sync if necessary
+    if !filereadable(local_path)
+        let command = 'sync ' . g:vp4_sync_options . ' ' . fullpath
         call s:PerforceSystem(command)
     endif
+
+    " open file in new vsplit
+    exe a:split_command
+    let command  = 'edit ' . local_path
+    exe command
 endfunction
 
 " Change explorer root to selected directory
 function! s:ExplorerChange()
+    if len(getline('.')) == 0 | return | endif
+
     let filename = split(getline('.'))[0]
     if strpart(filename, strlen(filename) - 1, 1) != '/' | return | endif
 
@@ -837,6 +850,8 @@ endfunction
 " If on a directory, toggle the directory.
 " If on a file, go to that file.
 function! s:ExplorerGoTo()
+    if len(getline('.')) == 0 | return | endif
+
     let filename = split(getline('.'))[0]
     let directory = s:line_map[line(".")]
     let fullpath = directory . filename
@@ -856,14 +871,7 @@ function! s:ExplorerGoTo()
         call setpos('.', saved_curpos)
     else
         " file
-        rightbelow vnew
-        let local_path = s:directory_map[directory] . s:PerforceStripRevision(filename)
-        if filereadable(local_path)
-            let command  = 'edit ' . local_path
-            exe command
-        else
-            call vp4#CheckServerPath(fullpath)
-        endif
+        call s:ExplorerSyncOrOpen('')
     endif
 endfunction
 
@@ -1021,7 +1029,6 @@ function! vp4#PerforceExplore(...)
     " buffer setup
     silent leftabove vnew Depot
     setlocal buftype=nofile
-    vertical resize 60
 
     call s:ExplorerPopulate(perforce_filepath)
     call s:ExplorerRender(perforce_filepath)
@@ -1030,7 +1037,9 @@ function! vp4#PerforceExplore(...)
     nnoremap <script> <silent> <buffer> <CR> :call <sid>ExplorerGoTo()<CR>
     nnoremap <script> <silent> <buffer> -    :call <sid>ExplorerPop()<CR>
     nnoremap <script> <silent> <buffer> c    :call <sid>ExplorerChange()<CR>
-    nnoremap <script> <silent> <buffer> s    :call <sid>ExplorerSync()<CR>
+    nnoremap <script> <silent> <buffer> s    :call <sid>ExplorerSyncOrOpen('rightbelow new')<CR>
+    nnoremap <script> <silent> <buffer> v    :call <sid>ExplorerSyncOrOpen('rightbelow vnew')<CR>
+    nnoremap <script> <silent> <buffer> t    :call <sid>ExplorerSyncOrOpen('rightbelow tab new')<CR>
     nnoremap <script> <silent> <buffer> q    :quit<CR>
 
     " syntax

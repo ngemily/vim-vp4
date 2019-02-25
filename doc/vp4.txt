@@ -159,10 +159,13 @@ Key mappings:
              | <CR> | Expand/collapse directory; go to file     |
              | -    | Explore parent node                       |
              | c    | Change root of explorer to this directory |
+             | s    | Open file in new split, syncing if req.   |
+             | v    | Open file in new vsplit, syncing if req.  |
+             | t    | Open file in new tab, syncing if req.     |
              | q    | Quit                                      |
              +======+===========================================+
 
-------------------------------------------------------------------------------
+Set g:vp4_sync_options to pass options to perforce sync command.
 ------------------------------------------------------------------------------
 SYSTEM
                                                                          *Vp4*
@@ -226,6 +229,10 @@ OPTIONS                                                          *vp4-options*
                             the file is synced locally, open that file.
                             Otherwise, open a new buffer with the server file
                             contents.
+
+g:vp4_sync_options          Options to pass to perforce sync command when 
+                            syncing files via the Explorer.
+
 ==============================================================================
 KNOWN ISSUES                                                      *vp4-issues*
 
