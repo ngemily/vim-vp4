@@ -8,6 +8,35 @@ vp4 does the following:
   _changelist_ _description_ for each chunk of code
 - Fantastical **diffing**, including vs _depot_, vs _shelved_, vs _previous_ rev
 - **File history** browsing; Make Vim _a Perforce time machine_
+- **Depot browsing** with sync support
+
+## Install
+
+### Via plugin manager [vim-plug](https://github.com/junegunn/vim-plug) 
+_recommended_
+
+If using vim-plug (recommended), add the following to the list of plugins in
+your vimrc:
+
+```
+Plug 'ngemily/vim-vp4'
+```
+
+### Manual
+
+Download, unzip, and copy into `~/.vim` as following:
+
+```
+cp autoload/vp4.vim ~/.vim/autoload/
+cp doc/vp4.vim ~/.vim/doc/
+cp plugin/vp4.vim ~/.vim/plugin/
+```
+
+Generate helptags by running the following in vim:
+
+```
+:helptags ~/.vim/doc
+```
 
 ## Commands
 
@@ -31,7 +60,7 @@ Opens a view like
     | <Description> <date> <user> <cl> |     std::cout << elem; |
     |                ...               |          ...           |
     +----------------------------------+------------------------+
-    | :Pannotate                                                |
+    | :Vp4Annotate                                              |
     +----------------------------------+------------------------+
 ```
 
