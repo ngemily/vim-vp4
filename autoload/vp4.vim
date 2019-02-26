@@ -822,7 +822,7 @@ function! s:ExplorerSyncOrOpen(split_command)
 
     " sync if necessary
     if !filereadable(local_path)
-        let command = 'sync ' . g:vp4_sync_options . ' ' . fullpath
+        let command = 'sync ' . g:vp4_sync_options . ' ' . s:PerforceStripRevision(fullpath)
         call s:PerforceSystem(command)
     endif
 
@@ -955,10 +955,15 @@ function! s:ExplorerPopulate(filepath)
                     \}
     endif
     if !has_key(s:directory_map, perforce_filepath)
-        " FIXME fails for //acds/main, when popping directory stack
+        " `where` fails for root of depot, when popping directory stack
         let command = 'where ' . strpart(perforce_filepath, 0, strlen(perforce_filepath) - 1)
-        let local_path = split(s:PerforceSystem(command))[-1]
-        let s:directory_map[perforce_filepath] = local_path . '/'
+        let retval = s:PerforceSystem(command)
+        if v:shell_error || strlen(retval) == 0
+            let s:directory_map[perforce_filepath] = '/'
+        else
+            let local_path = split(retval)[-1]
+            let s:directory_map[perforce_filepath] = local_path . '/'
+        endif
     endif
 
     if !has_key(s:directory_data[perforce_filepath], 'files')
@@ -1010,21 +1015,28 @@ endfunction
 " :Vp4Explore('//depot/path') - opens at '//depot/path'
 " :Vp4Explore('/local/path')  - opens at 'local/path'
 function! vp4#PerforceExplore(...)
-    let command = 'where '
+    let filepath = ''
+    let perforce_filepath = ''
+
     if a:0 > 0
-        let command .= a:1
+        let filepath = trim(a:1)
     else
-        " use directory of current file
-        let command .= expand('%:p:h')
+        let filepath = expand('%:p:h')
     endif
 
-    " `p4 where` only works on directories below the root
-    let retval = s:PerforceSystem(command)
-    if v:shell_error || strlen(retval) == 0
-        call s:EchoWarning("Unable to resolve a Perforce directory.")
-        return
+    if filepath[0:1] != '//'
+        let command = 'where ' . filepath
+        " NB: `p4 where` only works on directories below the root
+        "     e.g. `p4 where //main` will fail if 'main' is the root
+        let retval = s:PerforceSystem(command)
+        if v:shell_error || strlen(retval) == 0
+            call s:EchoWarning("Unable to resolve a Perforce directory.")
+            return
+        endif
+        let perforce_filepath = split(retval)[0]
+    else
+        let perforce_filepath = filepath
     endif
-    let perforce_filepath = split(retval)[0]
 
     " buffer setup
     silent leftabove vnew Depot
