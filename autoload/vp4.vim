@@ -62,6 +62,16 @@ function! s:EchoWarning(msg)
     echom a:msg
     echohl None
 endfunction
+
+function! s:GoToWindowForBufferName(name)
+    if bufwinnr(bufnr(a:name)) != -1
+        exe bufwinnr(bufnr(a:name)) . "wincmd w"
+        return 1
+    else
+        return 0
+    endif
+endfunction
+
 " }}}
 
 " {{{ Perforce system functions
@@ -1043,8 +1053,11 @@ function! vp4#PerforceExplore(...)
     endif
 
     " buffer setup
-    silent leftabove vnew Depot
-    setlocal buftype=nofile
+    if !(s:GoToWindowForBufferName('Depot'))
+        silent leftabove vnew Depot
+        setlocal buftype=nofile
+        setlocal nobuflisted
+    endif
 
     call s:ExplorerPopulate(perforce_filepath)
     call s:ExplorerRender(perforce_filepath)
