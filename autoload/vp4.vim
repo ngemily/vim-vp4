@@ -948,12 +948,16 @@ function! s:ExplorerPopulate(filepath)
     if g:perforce_debug
         echom 'Populating "' . perforce_filepath . '" ...'
     endif
+
     if !has_key(s:directory_data, perforce_filepath)
         let s:directory_data[perforce_filepath] = {
                     \'name' : split(perforce_filepath, '/')[-1] . '/',
                     \'folded' : 0,
                     \}
+    else
+        let s:directory_data[perforce_filepath]['folded'] = 0
     endif
+
     if !has_key(s:directory_map, perforce_filepath)
         " `where` fails for root of depot, when popping directory stack
         let command = 'where ' . strpart(perforce_filepath, 0, strlen(perforce_filepath) - 1)
