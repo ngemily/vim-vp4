@@ -526,9 +526,11 @@ endfunction
 function! s:PerforceAnnotateHighlight()
     syn match VP4Change /\v\d+$/
     syn match VP4Date /\v\d{4}\/\d{2}\/\d{2}/
+    syn match VP4Time /\v\d{2}:\d{2}:\d{2}( [A-Z]{3})?/
 
     hi def link VP4Change Number
     hi def link VP4Date Comment
+    hi def link VP4Time Comment
     hi def link VP4User Keyword
 endfunction
 
@@ -552,10 +554,18 @@ function! s:PerforceAnnotateFull(lbegin, lend)
             let cl_data = split(s:PerforceSystem('change -o ' . line), '\n')
 
             try
-                let data[line]['date'] = split(split(cl_data[17], '\t')[1], ' ')[0]
-                let data[line]['user'] = s:PrePad(split(cl_data[21], '\t')[1], 8)
-                let data[line]['description'] = substitute(join(cl_data[26:-1]),
+                let description_index = match(cl_data, '^Description')
+                let data[line]['description'] = substitute(join(cl_data[description_index + 1:-1]),
                         \ "\t", "", "g")
+
+                " Format: 'Date:\t<date> <time>'
+                let date_index = match(cl_data, '^Date')
+                let date = split(split(cl_data[date_index], '\t')[1], ' ')[0]
+                let data[line]['date'] = date
+
+                let user_index = match(cl_data, '^User')
+                let user = split(cl_data[user_index], '\t')[1]
+                let data[line]['user'] = s:PrePad(user, 8)
 
                 " [Hack] Conveniently use the fact that we have the user name
                 " now to identify it as a keyword for highlighting later.
@@ -572,20 +582,20 @@ function! s:PerforceAnnotateFull(lbegin, lend)
         " Small state machine to display the description for the current
         " changelist.  First line shows the date and user, subsequent lines show
         " the continue description, if it exceeds one line.
+        let LEN = 70
         if line != last_cl
             let idx = 0
-            let LEN = 40
-            call setline(lnr, strpart(data[line]['description'], idx, LEN)
+            call setline(lnr, ' '
                     \ . ' ' . data[line]['date']
                     \ . ' ' . data[line]['user']
                     \ . ' ' . line
                     \ )
         else
-            let idx += LEN
-            let LEN = 60
-            call setline(lnr, strpart(data[line]['description'], idx, LEN)
+            let description = strpart(data[line]['description'], idx, LEN)
+            call setline(lnr, s:Pad(description, LEN)
                     \ . ' ' .line
                     \ )
+            let idx += LEN
         endif
 
         let last_cl = line
