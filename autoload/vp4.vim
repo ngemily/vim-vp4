@@ -200,8 +200,6 @@ function! s:PerforceGetDirectory(filepath)
         let filepath = strpart(filepath, 0, strlen(filepath) - 1)
     endif
 
-    echom filepath
-
     " get server path
     if filepath[0:1] == '//'
         " given server path
