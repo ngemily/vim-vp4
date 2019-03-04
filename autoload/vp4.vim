@@ -882,10 +882,11 @@ function! s:ExplorerGoTo()
         let d = get(s:directory_data, fullpath)
         if !has_key(d, 'files')
             call s:ExplorerPopulate(fullpath)
+        else
+            " toggle fold/unfold
+            let d.folded = !d.folded
         endif
 
-        " toggle fold/unfold
-        let d.folded = !d.folded
         let saved_curpos = getcurpos()
         call s:ExplorerRender(g:explorer_key)
         call setpos('.', saved_curpos)
