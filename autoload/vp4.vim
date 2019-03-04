@@ -802,10 +802,16 @@ endfunction
 "   foo.cpp#2           opens #2
 "   foo.cpp             does nothing
 function! vp4#CheckServerPath(filename)
+    " " FIXME
+    " " doesn't work on VimEnter
+    " " leaves undesired empty buffer
+    " let perforce_directory = s:PerforceGetDirectory(a:filename)
+    " if (perforce_directory != '')
+    "     call vp4#PerforceExplore(a:filename)
+    " endif
+
     " test for existence of depot file
     if !s:PerforceExists(a:filename) | return | endif
-
-    " TODO if directory, open explorer
 
     let requested_rev = matchstr(a:filename, '#[0-9]\+')
     let requested_rev = strpart(requested_rev, 1)
