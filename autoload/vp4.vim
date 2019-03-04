@@ -190,6 +190,47 @@ function! s:PerforceExists(filename)
     return s:PerforceQuery('headRev', a:filename) != ''
 endfunction
 
+" Tests for whether a given path is a directory in perforce
+" given either a local path or a server path
+function! s:PerforceGetDirectory(filepath)
+    let filepath = a:filepath
+
+    " p4 commands do not expect trailing '/'
+    if strpart(filepath, strlen(filepath) - 1, 1) == '/'
+        let filepath = strpart(filepath, 0, strlen(filepath) - 1)
+    endif
+
+    echom filepath
+
+    " get server path
+    if filepath[0:1] == '//'
+        " given server path
+        let perforce_filepath = filepath
+    else
+        " given local path
+        let perforce_filepath = filepath
+        let command = 'where ' . filepath
+        " NB: `p4 where` only works on directories below the root
+        "     e.g. `p4 where //main` will fail if 'main' is the root
+        let retval = s:PerforceSystem(command)
+        if v:shell_error || strlen(retval) == 0
+            return ''
+        endif
+        let perforce_filepath = split(retval)[0]
+    endif
+
+    " verify server path
+    " TODO potentially use parent directory as input if given file
+    let command = 'dirs ' . perforce_filepath
+    let retval = s:PerforceSystem(command)
+    let retval = trim(retval)
+    if v:shell_error || (retval != perforce_filepath)
+        return ''
+    endif
+
+    return perforce_filepath
+endfunction
+
 " Tests for opened.
 function! s:PerforceOpened(filename)
     return s:PerforceQuery('action', a:filename) != ''
@@ -1051,32 +1092,8 @@ function! vp4#PerforceExplore(...)
         let filepath = expand('%:p:h')
     endif
 
-    if filepath[0:1] == '//'
-        " given server path
-        if strpart(filepath, strlen(filepath) - 1, 1) == '/'
-            let filepath = strpart(filepath, 0, strlen(filepath) - 1)
-        endif
-        let perforce_filepath = filepath
-    else
-        " given local path
-        let perforce_filepath = filepath
-        let command = 'where ' . filepath
-        " NB: `p4 where` only works on directories below the root
-        "     e.g. `p4 where //main` will fail if 'main' is the root
-        let retval = s:PerforceSystem(command)
-        if v:shell_error || strlen(retval) == 0
-            call s:EchoWarning("Unable to resolve a Perforce directory.")
-            return
-        endif
-        let perforce_filepath = split(retval)[0]
-    endif
-
-    " verify input is a directory, not file
-    " TODO potentially use parent directory as input
-    let command = 'dirs ' . perforce_filepath
-    let retval = s:PerforceSystem(command)
-    let retval = trim(retval)
-    if v:shell_error || (retval != perforce_filepath)
+    let perforce_filepath = s:PerforceGetDirectory(filepath)
+    if perforce_filepath == ''
         call s:EchoWarning("Unable to resolve a Perforce directory.")
         return
     endif
