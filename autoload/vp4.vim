@@ -766,6 +766,8 @@ function! vp4#CheckServerPath(filename)
     " test for existence of depot file
     if !s:PerforceExists(a:filename) | return | endif
 
+    " TODO if directory, open explorer
+
     let requested_rev = matchstr(a:filename, '#[0-9]\+')
     let requested_rev = strpart(requested_rev, 1)
 
@@ -1049,7 +1051,15 @@ function! vp4#PerforceExplore(...)
         let filepath = expand('%:p:h')
     endif
 
-    if filepath[0:1] != '//'
+    if filepath[0:1] == '//'
+        " given server path
+        if strpart(filepath, strlen(filepath) - 1, 1) == '/'
+            let filepath = strpart(filepath, 0, strlen(filepath) - 1)
+        endif
+        let perforce_filepath = filepath
+    else
+        " given local path
+        let perforce_filepath = filepath
         let command = 'where ' . filepath
         " NB: `p4 where` only works on directories below the root
         "     e.g. `p4 where //main` will fail if 'main' is the root
@@ -1059,8 +1069,16 @@ function! vp4#PerforceExplore(...)
             return
         endif
         let perforce_filepath = split(retval)[0]
-    else
-        let perforce_filepath = filepath
+    endif
+
+    " verify input is a directory, not file
+    " TODO potentially use parent directory as input
+    let command = 'dirs ' . perforce_filepath
+    let retval = s:PerforceSystem(command)
+    let retval = trim(retval)
+    if v:shell_error || (retval != perforce_filepath)
+        call s:EchoWarning("Unable to resolve a Perforce directory.")
+        return
     endif
 
     " buffer setup
