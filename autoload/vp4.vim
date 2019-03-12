@@ -704,7 +704,12 @@ endfunction
 " Populate the quick-fix or location list with the past revisions of this file.
     " Only lists the files and some changelist data.  The file is not retrieved
     " until the user opens it.
-function! vp4#PerforceFilelog()
+function! vp4#PerforceFilelog(...)
+    let max_history = g:vp4_filelog_max
+    if a:0 > 0
+        let max_history = a:1
+    endif
+
     let filename = s:PerforceStripRevision(expand('%'))
     if !s:PerforceAssertExists(filename) | return | endif
 
@@ -715,7 +720,7 @@ function! vp4#PerforceFilelog()
     " Set up the command.  Limit the maximum number of entries.
     let command = 'filelog'
     if g:vp4_filelog_max > 0
-        let command .= ' ' . '-m ' . g:vp4_filelog_max
+        let command .= ' ' . '-m ' . max_history
     endif
     let command .= ' ' . filename
 

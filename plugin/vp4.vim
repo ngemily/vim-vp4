@@ -62,7 +62,7 @@ augroup END
 command! -nargs=? Vp4Diff call vp4#PerforceDiff(<f-args>)
 command! -range=% -nargs=? Vp4Annotate <line1>,<line2>call vp4#PerforceAnnotate(<f-args>)
 command! Vp4Change call vp4#PerforceChange()
-command! Vp4Filelog call vp4#PerforceFilelog()
+command! -nargs=? Vp4Filelog call vp4#PerforceFilelog(<f-args>)
 command! -bang Vp4Revert call vp4#PerforceRevert(<bang>0)
 command! -bang Vp4Delete call vp4#PerforceDelete(<bang>0)
 command! Vp4Reopen call vp4#PerforceReopen()

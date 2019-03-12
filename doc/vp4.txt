@@ -97,13 +97,14 @@ in diff mode.  Hit 'q' to exit.
 Call `fstat` on this file.
 
                                                                   *Vp4Filelog*
-Populate the quick-fix or location list with the past revisions of this file.
-The file is not actually retrieved from the server until it is opened.  Lists
-in chronologically reverse order.
+:Vp4Filelog [n]
+Populate the quick-fix or location list with the past [n] or default revisions
+of this file.  The file is not actually retrieved from the server until it is
+opened.  Lists in chronologically reverse order.
 
 Unset |g:vp4_open_loclist| to prevent the location list from being opened
 automatically.  Set |g:vp4_filelog_max| to limit the number of revisions
-listed.
+listed by default.
 
 ------------------------------------------------------------------------------
 CHANGE SPECIFICATION
