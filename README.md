@@ -28,7 +28,7 @@ Download, unzip, and copy into `~/.vim` as following:
 
 ```
 cp autoload/vp4.vim ~/.vim/autoload/
-cp doc/vp4.vim ~/.vim/doc/
+cp doc/vp4.txt ~/.vim/doc/
 cp plugin/vp4.vim ~/.vim/plugin/
 ```
 
