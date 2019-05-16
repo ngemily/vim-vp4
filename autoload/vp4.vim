@@ -520,10 +520,10 @@ function! vp4#PerforceDiff(...)
     " @cl: Diff with shelved in a:1
     if a:0 >= 1 && a:1[0] == '@'
         let cl = split(a:1, '@')[0]
-        let filename .= '@=' . cl
+        let filename .= '@=' . trim(cl)
     " #rev: Diff with revision a:1
     elseif a:0 >= 1 && a:1[0] == '#'
-        let filename = s:PerforceStripRevision(filename) . a:1
+        let filename = s:PerforceStripRevision(filename) . trim(a:1)
     " s: Diff with shelved in current changelist
     elseif a:0 >= 1 && a:1 =~? 's'
         let filename .= '@=' . s:PerforceGetCurrentChangelist(filename)
