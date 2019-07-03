@@ -682,7 +682,7 @@ function! vp4#PerforceAnnotate(...) range
 
     " Clean up buffer, set local options, move cursor to saved position
     set modifiable
-    %right
+    %right 80
     setlocal buftype=nofile bufhidden=wipe nobuflisted noswapfile nowrap
     setlocal nonumber norelativenumber
     call s:PerforceAnnotateHighlight()
