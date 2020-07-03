@@ -652,7 +652,7 @@ endfunction
     " which it was last edited.  Accepts a range to limit the section being
     " fully annotated.
 function! vp4#PerforceAnnotate(...) range
-    let filename = expand('%')
+    let filename = expand('%:p')
     if !s:PerforceAssertExists(filename) | return | endif
 
     " `p4 annotate` can only operate on revisions that exist in the depot.  If a
