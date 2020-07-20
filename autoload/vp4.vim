@@ -341,14 +341,14 @@ endfunction
 " {{{ File editing
 " Call p4 add.
 function! vp4#PerforceAdd()
-    let filename = expand('%')
+    let filename = s:ExpandPath('%')
 
     call s:PerforceSystem('add ' .filename)
 endfunction
 
 " Call p4 delete.
 function! vp4#PerforceDelete(bang)
-    let filename = expand('%')
+    let filename = s:ExpandPath('%')
     if !s:PerforceAssertExists(filename) | return | endif
 
     if !a:bang
@@ -365,7 +365,7 @@ endfunction
 
 " Call p4 edit.
 function! vp4#PerforceEdit()
-    let filename = expand('%')
+    let filename = s:ExpandPath('%')
     if !s:PerforceAssertExists(filename) | return | endif
 
     call s:PerforceSystem('edit ' .filename)
@@ -376,7 +376,7 @@ endfunction
 
 " Call p4 revert.  Confirms before performing the revert.
 function! vp4#PerforceRevert(bang)
-    let filename = expand('%')
+    let filename = s:ExpandPath('%')
     if !s:PerforceAssertOpened(filename) | return | endif
 
     if !a:bang
@@ -397,7 +397,7 @@ endfunction
 " {{{ Change specification
 " Call p4 shelve
 function! vp4#PerforceShelve(bang)
-    let filename = expand('%')
+    let filename = s:ExpandPath('%')
     if !s:PerforceAssertOpened(filename) | return | endif
 
     let perforce_command = 'shelve'
@@ -438,7 +438,7 @@ endfunction
     " Uses the -o/-i options to avoid the confirmation on abort.
     " Works by opening a new window to write your change description.
 function! vp4#PerforceChange()
-    let filename = expand('%')
+    let filename = s:ExpandPath('%')
     let perforce_command = 'change -o'
     let lnr = 25
 
@@ -478,7 +478,7 @@ endfunction
 " output in a preview window.
 function! vp4#PerforceDescribe()
 
-    let filename = expand('%')
+    let filename = s:ExpandPath('%')
     let current_changelist = s:PerforceGetCurrentChangelist(filename)
 
     if !current_changelist
@@ -503,7 +503,7 @@ endfunction
 " Prompt the user to move file currently being edited to a different changelist.
     " Present the user with a list of current changes.
 function! vp4#PerforceReopen()
-    let filename = expand('%')
+    let filename = s:ExpandPath('%')
     if !s:PerforceAssertOpened(filename) | return | endif
 
     " Get the pending changes in the current client
@@ -540,7 +540,7 @@ endfunction
     "  #rev    diffs with given revision
     "  <none>  diffs with have revision
 function! vp4#PerforceDiff(...)
-    let filename = expand('%')
+    let filename = s:ExpandPath('%')
 
     " Check for options
     "   'a:0' is set to the number of extra arguments
@@ -676,7 +676,7 @@ endfunction
     " which it was last edited.  Accepts a range to limit the section being
     " fully annotated.
 function! vp4#PerforceAnnotate(...) range
-    let filename = expand('%:p')
+    let filename = s:ExpandPath('%:p')
     if !s:PerforceAssertExists(filename) | return | endif
 
     " `p4 annotate` can only operate on revisions that exist in the depot.  If a
@@ -738,7 +738,7 @@ function! vp4#PerforceFilelog(...)
         let max_history = a:1
     endif
 
-    let filename = s:PerforceStripRevision(expand('%'))
+    let filename = s:PerforceStripRevision(s:ExpandPath('%'))
     if !s:PerforceAssertExists(filename) | return | endif
 
     " Remember some stuff about this file
@@ -793,7 +793,7 @@ endfunction
 " Check if file exists in the depot and is not already opened for edit.  If so,
 " prompt user to open for edit.
 function! vp4#PromptForOpen()
-    let filename = expand('%')
+    let filename = s:ExpandPath('%')
     if &readonly && s:PerforceAssertExists(filename)
         let do_edit = input(filename .
                 \' is not opened for edit.  p4 edit it now? [y/n]: ')
@@ -815,7 +815,7 @@ function! s:PerforceOpenRevision()
         setlocal buftype=nofile
     endif
 
-    let filename = expand('%')
+    let filename = s:ExpandPath('%')
     if !s:PerforceAssertExists(filename) | return | endif
 
     " Print the file to this buffer
