@@ -161,7 +161,7 @@ function! s:PerforceFstat(field, filename)
 
     " Extract the value from the string which looks like:
     "   ... headRev 65\n\n
-    let val = split(split(s, '\n')[0], ' ')[2]
+    let val = split(split(substitute(s, '\r', '', ''), '\n')[0])[2]
     if g:perforce_debug
         echom 'fstat got value ' . val . ' for field ' . a:field
                 \ . ' on file ' . a:filename
