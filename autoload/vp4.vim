@@ -112,6 +112,30 @@ function! s:PerforceWrite(cmd)
     endif
     execute command
 endfunction
+
+" Function to get the path of the file
+function! s:ExpandPath(file)
+    if exists("g:base_path_replacements")
+        echom "We have a base path replacements"
+        let l:oldPath = expand('%:p')
+        let l:replacements = items(g:base_path_replacements)
+        for item in l:replacements
+            echom "does " . l:oldPath . " match " . item[0]
+            if l:oldPath =~ item[0]
+                " We have a match
+                echom "Matched string " . item[0] . " in " . l:oldPath
+                let l:newFile = substitute(l:oldPath, item[0], item[1], "")
+                echom "New path " . l:newFile
+                return l:newFile
+            endif
+        endfor
+        echom "Did not find replacement, return"
+        return expand(a:file)
+    else
+        echom "Using default pathing"
+        return expand(a:file)
+    endif
+endfunction
 " }}}
 
 " {{{ Perforce checker infrastructure
