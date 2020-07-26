@@ -115,10 +115,12 @@ endfunction
 
 " Function to get the path of the file
 function! s:ExpandPath(file)
-    if exists("g:base_path_replacements")
-        echom "We have a base path replacements"
+    if exists("g:vp4_base_path_replacements")
+        if g:perforce_debug	
+            echom "We have a base path replacements"
+        endif
         let l:oldPath = expand('%:p')
-        let l:replacements = items(g:base_path_replacements)
+        let l:replacements = items(g:vp4_base_path_replacements)
         for item in l:replacements
             echom "does " . l:oldPath . " match " . item[0]
             if l:oldPath =~ item[0]
