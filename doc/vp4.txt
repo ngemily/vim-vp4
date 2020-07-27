@@ -229,6 +229,10 @@ OPTIONS                                                          *vp4-options*
 g:vp4_sync_options          Options to pass to perforce sync command when 
                             syncing files via the Explorer.
 
+g:vp4_base_path_replacements
+                            Allows P4 paths to be replaced at command time
+                            = { /home/u/bad/repo/ : /home/u/good/repo} (ex)
+                            = {} (default)
 ==============================================================================
 KNOWN ISSUES                                                      *vp4-issues*
 
