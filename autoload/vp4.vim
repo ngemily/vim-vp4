@@ -122,19 +122,29 @@ function! s:ExpandPath(file)
         let l:oldPath = expand('%:p')
         let l:replacements = items(g:vp4_base_path_replacements)
         for item in l:replacements
-            echom "does " . l:oldPath . " match " . item[0]
+            if g:perforce_debug
+                echom "does " . l:oldPath . " match " . item[0]
+            endif
             if l:oldPath =~ item[0]
                 " We have a match
-                echom "Matched string " . item[0] . " in " . l:oldPath
+                if g:perforce_debug
+                    echom "Matched string " . item[0] . " in " . l:oldPath
+                endif
                 let l:newFile = substitute(l:oldPath, item[0], item[1], "")
-                echom "New path " . l:newFile
+                if g:perforce_debug
+                    echom "New path " . l:newFile
+                endif
                 return l:newFile
             endif
         endfor
-        echom "Did not find replacement, return"
+        if g:perforce_debug
+            echom "Did not find replacement, return"
+        endif
         return expand(a:file)
     else
-        echom "Using default pathing"
+        if g:perforce_debug
+            echom "Using default pathing"
+        endif
         return expand(a:file)
     endif
 endfunction
