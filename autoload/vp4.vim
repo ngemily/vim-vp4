@@ -80,12 +80,17 @@ function! s:PerforceSystem(cmd)
 	if has('win64') || has('win32')
 		let command = g:vp4_perforce_executable . " " . a:cmd . " 2> NUL"
 	else
+		let prev = &shell
+		set shell=sh
 		let command = g:vp4_perforce_executable . " " . a:cmd . " 2> /dev/null"
 	endif
     if g:perforce_debug
         echom "DBG sys: " . command
     endif
     let retval = system(command)
+	if ! has('win64') && ! has('win32')
+		let &shell=prev
+	endif
     return retval
 endfunction
 
