@@ -166,7 +166,7 @@ function! s:PerforceFstat(field, filename)
     "   3. not shelved in changelist
     " It always starts a valid line with '...'; use it to validate response.
     " It does return -1 if an invalid field was requested.
-    let s = s:PerforceSystem('fstat -T ' . a:field . ' ' . a:filename)
+    let s = s:PerforceSystem('fstat -T ' . a:field . ' ' . shellescape(a:filename))
     if v:shell_error || matchstr(s, '\.\.\.') == ''
         if matchstr(s, 'P4PASSWD') != ''
             call s:EchoError(split(s, '\n')[0])
@@ -252,7 +252,7 @@ function! s:PerforceGetDirectory(filepath)
     else
         " given local path
         let perforce_filepath = filepath
-        let command = 'where ' . filepath
+        let command = 'where ' . shellescape(filepath)
         " NB: `p4 where` only works on directories below the root
         "     e.g. `p4 where //main` will fail if 'main' is the root
         let retval = s:PerforceSystem(command)
@@ -264,7 +264,7 @@ function! s:PerforceGetDirectory(filepath)
 
     " verify server path
     " TODO potentially use parent directory as input if given file
-    let command = 'dirs ' . perforce_filepath
+    let command = 'dirs ' . shellescape(perforce_filepath)
     let retval = s:PerforceSystem(command)
     let retval = trim(retval)
     if v:shell_error || (retval != perforce_filepath)
@@ -360,7 +360,7 @@ endfunction
 function! vp4#PerforceAdd()
     let filename = s:ExpandPath('%')
 
-    call s:PerforceSystem('add ' .filename)
+    call s:PerforceSystem('add ' . shellescape(filename))
 endfunction
 
 " Call p4 delete.
@@ -369,12 +369,12 @@ function! vp4#PerforceDelete(bang)
     if !s:PerforceAssertExists(filename) | return | endif
 
     if !a:bang
-        let do_delete = input('Are you sure you want to delete ' . filename
-                \ . '? [y/n]: ')
+        let do_delete = confirm('Are you sure you want to delete ' . filename
+                \ . '?', "&Yes\n&No", 2, "Question")
     endif
 
-    if a:bang || do_delete ==? 'y'
-        call s:PerforceSystem('delete ' .filename)
+    if a:bang || do_delete ==? 1
+        call s:PerforceSystem('delete ' . shellescape(filename))
         bdelete
     endif
 
@@ -385,7 +385,7 @@ function! vp4#PerforceEdit()
     let filename = s:ExpandPath('%')
     if !s:PerforceAssertExists(filename) | return | endif
 
-    call s:PerforceSystem('edit ' .filename)
+    call s:PerforceSystem('edit ' . shellescape(filename))
 
     " reload the file to refresh &readonly attribute
     execute 'edit ' filename
@@ -397,12 +397,12 @@ function! vp4#PerforceRevert(bang)
     if !s:PerforceAssertOpened(filename) | return | endif
 
     if !a:bang
-        let do_revert = input('Are you sure you want to revert ' . filename
-                \ . '? [y/n]: ')
+        let do_revert = confirm('Are you sure you want to revert ' . filename
+                \. '?', "&Yes\n&No", 2, "Question")
     endif
 
-    if a:bang || do_revert ==? 'y'
-        call s:PerforceSystem('revert ' .filename)
+    if a:bang || do_revert ==? 1
+        call s:PerforceSystem('revert ' . shellescape(filename))
         set nomodified
     endif
 
@@ -423,7 +423,7 @@ function! vp4#PerforceShelve(bang)
     if cl !~# 'default'
         let perforce_command .= ' -c ' . cl
         if a:bang | let perforce_command .= ' -f' | endif
-        let msg = split(s:PerforceSystem(perforce_command . ' ' . filename), '\n')
+        let msg = split(s:PerforceSystem(perforce_command . ' ' . shellescape(filename)), '\n')
         if v:shell_error | call s:EchoError(msg[-1]) | endif
         let msg = filename . ' shelved in p4:' . cl
         echom msg
@@ -543,7 +543,7 @@ function! vp4#PerforceReopen()
     echom 'Moving ' . filename . ' to change ' . change_number
 
     " Perform the reopen command
-    let perforce_command = 'reopen -c ' . change_number . ' ' . filename
+    let perforce_command = 'reopen -c ' . change_number . ' ' . shellescape(filename)
     call s:PerforceSystem(perforce_command)
 endfunction
 " }}}
@@ -767,7 +767,7 @@ function! vp4#PerforceFilelog(...)
     if g:vp4_filelog_max > 0
         let command .= ' ' . '-m ' . max_history
     endif
-    let command .= ' ' . filename
+    let command .= ' ' . shellescape(filename)
 
     " Compile all the location list data
     let data = []
@@ -809,14 +809,16 @@ endfunction
 " {{{ Passive (called by auto commands)
 " Check if file exists in the depot and is not already opened for edit.  If so,
 " prompt user to open for edit.
-function! vp4#PromptForOpen()
+function! vp4#PromptForOpen(skip_confirmation)
     let filename = s:ExpandPath('%')
     if &readonly && s:PerforceAssertExists(filename)
-        let do_edit = input(filename .
-                \' is not opened for edit.  p4 edit it now? [y/n]: ')
-        if do_edit ==? 'y'
+        if !a:skip_confirmation
+          let do_edit = confirm(filename .
+                  \' is not opened for edit. p4 edit it now?', "&Yes\n&No", 1, "Question")
+        endif
+        if a:skip_confirmation || do_edit ==? 1
             setlocal autoread
-            call s:PerforceSystem('edit ' .filename)
+            call s:PerforceSystem('edit ' . shellescape(filename))
         endif
     endif
 endfunction
@@ -939,7 +941,7 @@ function! s:ExplorerSyncOrOpen(split_command)
 
     " sync if necessary
     if !filereadable(local_path)
-        let command = 'sync ' . g:vp4_sync_options . ' ' . s:PerforceStripRevision(fullpath)
+        let command = 'sync ' . g:vp4_sync_options . ' ' . shellescape(s:PerforceStripRevision(fullpath))
         call s:PerforceSystem(command)
     endif
 
@@ -1078,7 +1080,7 @@ function! s:ExplorerPopulate(filepath)
 
     if !has_key(s:directory_map, perforce_filepath)
         " `where` fails for root of depot, when popping directory stack
-        let command = 'where ' . strpart(perforce_filepath, 0, strlen(perforce_filepath) - 1)
+        let command = 'where ' . shellescape(strpart(perforce_filepath, 0, strlen(perforce_filepath) - 1))
         let retval = s:PerforceSystem(command)
         if v:shell_error || strlen(retval) == 0
             let s:directory_map[perforce_filepath] = '/'
@@ -1089,7 +1091,7 @@ function! s:ExplorerPopulate(filepath)
     endif
 
     if !has_key(s:directory_data[perforce_filepath], 'files')
-        let pattern = '"' . perforce_filepath . '*"'
+        let pattern = shellescape(perforce_filepath . '*')
 
         " Populate directories
         let perforce_command = 'dirs ' . pattern

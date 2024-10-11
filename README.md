@@ -147,7 +147,8 @@ confirmation.
 ### Prompt for edit
 
 When writing a file, set `g:vp4_prompt_on_write` to enable prompt on write to
-`p4 edit` the file.
+`p4 edit` the file. You can also set `g:vp4_open_on_write` to skip the prompt 
+and automatically open the file with no confirmation.
 
 ### Open depot file
 

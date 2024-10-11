@@ -29,6 +29,7 @@ endfunction
 
 call s:set('g:vp4_perforce_executable', 'p4')
 call s:set('g:vp4_prompt_on_write', 1)
+call s:set('g:vp4_open_on_write', 0)
 call s:set('g:vp4_annotate_revision', 0)
 call s:set('g:vp4_open_loclist', 1)
 call s:set('g:vp4_filelog_max', 10)
@@ -46,8 +47,8 @@ call s:set('g:vp4_base_path_replacements', {})
 " {{{ Auto-commands
 augroup PromptOnWrite
     autocmd!
-    if g:vp4_prompt_on_write
-        autocmd BufWritePre * call vp4#PromptForOpen()
+    if g:vp4_prompt_on_write || g:vp4_open_on_write
+        autocmd BufWritePre * call vp4#PromptForOpen(g:vp4_open_on_write)
     endif
 augroup END
 
