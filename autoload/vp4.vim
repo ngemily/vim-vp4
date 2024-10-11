@@ -809,12 +809,14 @@ endfunction
 " {{{ Passive (called by auto commands)
 " Check if file exists in the depot and is not already opened for edit.  If so,
 " prompt user to open for edit.
-function! vp4#PromptForOpen()
+function! vp4#PromptForOpen(skip_confirmation)
     let filename = s:ExpandPath('%')
     if &readonly && s:PerforceAssertExists(filename)
-        let do_edit = confirm(filename .
-                \' is not opened for edit. p4 edit it now?', "&Yes\n&No", 1, "Question")
-        if do_edit ==? 1
+        if !a:skip_confirmation
+          let do_edit = confirm(filename .
+                  \' is not opened for edit. p4 edit it now?', "&Yes\n&No", 1, "Question")
+        endif
+        if a:skip_confirmation || do_edit ==? 1
             setlocal autoread
             call s:PerforceSystem('edit ' .filename)
         endif
