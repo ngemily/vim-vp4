@@ -369,11 +369,11 @@ function! vp4#PerforceDelete(bang)
     if !s:PerforceAssertExists(filename) | return | endif
 
     if !a:bang
-        let do_delete = input('Are you sure you want to delete ' . filename
-                \ . '? [y/n]: ')
+        let do_delete = confirm('Are you sure you want to delete ' . filename
+                \ . '?', "&Yes\n&No", 2, "Question")
     endif
 
-    if a:bang || do_delete ==? 'y'
+    if a:bang || do_delete ==? 1
         call s:PerforceSystem('delete ' .filename)
         bdelete
     endif
@@ -397,11 +397,11 @@ function! vp4#PerforceRevert(bang)
     if !s:PerforceAssertOpened(filename) | return | endif
 
     if !a:bang
-        let do_revert = input('Are you sure you want to revert ' . filename
-                \ . '? [y/n]: ')
+        let do_revert = confirm('Are you sure you want to revert ' . filename
+                \. '?', "&Yes\n&No", 2, "Question")
     endif
 
-    if a:bang || do_revert ==? 'y'
+    if a:bang || do_revert ==? 1
         call s:PerforceSystem('revert ' .filename)
         set nomodified
     endif
@@ -812,9 +812,9 @@ endfunction
 function! vp4#PromptForOpen()
     let filename = s:ExpandPath('%')
     if &readonly && s:PerforceAssertExists(filename)
-        let do_edit = input(filename .
-                \' is not opened for edit.  p4 edit it now? [y/n]: ')
-        if do_edit ==? 'y'
+        let do_edit = confirm(filename .
+                \' is not opened for edit. p4 edit it now?', "&Yes\n&No", 1, "Question")
+        if do_edit ==? 1
             setlocal autoread
             call s:PerforceSystem('edit ' .filename)
         endif
